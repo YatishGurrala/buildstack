@@ -47,12 +47,12 @@ async function signAppToken(payload: { sub: string; email: string; projectKey: s
     .sign(secret);
 }
 
-function mapUser(row: { id: string; email: string; metadata: Record<string, unknown>; created_at: Date }): AppUser {
+function mapUser(row: { id: string; email: string; metadata: Record<string, unknown>; created_at: Date | string }): AppUser {
   return {
     id: row.id,
     email: row.email,
     metadata: row.metadata,
-    createdAt: row.created_at.toISOString(),
+    createdAt: new Date(row.created_at).toISOString(),
   };
 }
 
@@ -129,7 +129,7 @@ export const projectAuthService = {
   async _createSession(
     schemaName: string,
     projectKey: string,
-    user: { id: string; email: string; metadata: Record<string, unknown>; created_at: Date },
+    user: { id: string; email: string; metadata: Record<string, unknown>; created_at: Date | string },
   ): Promise<LoginResult> {
     const expiresAt = new Date(Date.now() + SESSION_TTL_SECONDS * 1000);
     const token = await signAppToken({ sub: user.id, email: user.email, projectKey });

@@ -21,16 +21,16 @@ function mapRecord(item: {
   collection: string;
   owner_id: string | null;
   data: Record<string, unknown>;
-  created_at: Date;
-  updated_at: Date;
+  created_at: Date | string;
+  updated_at: Date | string;
 }): ProjectRecord {
   return {
     id: item.id,
     collection: item.collection,
     ownerId: item.owner_id,
     data: item.data,
-    createdAt: item.created_at.toISOString(),
-    updatedAt: item.updated_at.toISOString(),
+    createdAt: new Date(item.created_at).toISOString(),
+    updatedAt: new Date(item.updated_at).toISOString(),
   };
 }
 

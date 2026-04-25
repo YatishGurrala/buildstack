@@ -1,22 +1,26 @@
-import { PrismaClient } from "@/generated/core";
+import { Pool } from "pg";
 
 import { env } from "@/lib/env";
 
-const globalForProjects = globalThis as unknown as { projectsPrisma?: PrismaClient };
+const globalForProjects = globalThis as unknown as { projectsPool?: Pool };
 
 export const projectsDb =
-  globalForProjects.projectsPrisma ??
-  new PrismaClient({
-    datasources: {
-      db: {
-        url: env.PROJECTS_DATABASE_URL,
-      },
-    },
-    log: process.env.NODE_ENV === "development" ? ["query", "warn", "error"] : ["error"],
+  globalForProjects.projectsPool ??
+  new Pool({
+    connectionString: env.PROJECTS_DATABASE_URL,
   });
 
 if (process.env.NODE_ENV !== "production") {
-  globalForProjects.projectsPrisma = projectsDb;
+  globalForProjects.projectsPool = projectsDb;
+}
+
+async function queryRows<T>(sql: string, values: unknown[] = []) {
+  const result = await projectsDb.query(sql, values);
+  return result.rows as T[];
+}
+
+async function execute(sql: string, values: unknown[] = []) {
+  await projectsDb.query(sql, values);
 }
 
 export function toProjectSchemaName(projectKey: string) {
@@ -41,8 +45,8 @@ function quoteIdentifier(value: string) {
 export async function provisionProjectSchema(schemaName: string) {
   const schema = quoteIdentifier(schemaName);
 
-  await projectsDb.$executeRawUnsafe(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
-  await projectsDb.$executeRawUnsafe(`
+  await execute(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
+  await execute(`
     CREATE TABLE IF NOT EXISTS ${schema}.app_users (
       id TEXT PRIMARY KEY,
       email TEXT NOT NULL UNIQUE,
@@ -52,7 +56,7 @@ export async function provisionProjectSchema(schemaName: string) {
       updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
-  await projectsDb.$executeRawUnsafe(`
+  await execute(`
     CREATE TABLE IF NOT EXISTS ${schema}.app_sessions (
       id TEXT PRIMARY KEY,
       app_user_id TEXT NOT NULL REFERENCES ${schema}.app_users(id) ON DELETE CASCADE,
@@ -62,7 +66,7 @@ export async function provisionProjectSchema(schemaName: string) {
       revoked_at TIMESTAMP(3)
     )
   `);
-  await projectsDb.$executeRawUnsafe(`
+  await execute(`
     CREATE TABLE IF NOT EXISTS ${schema}.records (
       id TEXT PRIMARY KEY,
       collection TEXT NOT NULL,
@@ -72,16 +76,16 @@ export async function provisionProjectSchema(schemaName: string) {
       updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
-  await projectsDb.$executeRawUnsafe(
+  await execute(
     `CREATE INDEX IF NOT EXISTS ${schemaName}_records_collection_idx ON ${schema}.records(collection)`,
   );
-  await projectsDb.$executeRawUnsafe(
+  await execute(
     `CREATE INDEX IF NOT EXISTS ${schemaName}_records_owner_idx ON ${schema}.records(owner_id)`,
   );
 }
 
 export async function getProjectStorageUsage(schemaName: string) {
-  const rows = await projectsDb.$queryRawUnsafe<Array<{ storageBytes: bigint | number | string | null }>>(
+  const rows = await queryRows<{ storageBytes: bigint | number | string | null }>(
     `
       SELECT COALESCE(SUM(pg_total_relation_size(c.oid)), 0) AS "storageBytes"
       FROM pg_class c
@@ -89,7 +93,7 @@ export async function getProjectStorageUsage(schemaName: string) {
       WHERE n.nspname = $1
         AND c.relkind = 'r'
     `,
-    schemaName,
+    [schemaName],
   );
 
   const value = rows[0]?.storageBytes ?? 0;
@@ -110,8 +114,8 @@ type ProjectRecordRow = {
   collection: string;
   owner_id: string | null;
   data: Record<string, unknown>;
-  created_at: Date;
-  updated_at: Date;
+  created_at: Date | string;
+  updated_at: Date | string;
 };
 
 type ProjectRecordFilters = {
@@ -141,7 +145,7 @@ export async function listProjectRecords(schemaName: string, filters: ProjectRec
   values.push(filters.limit);
   const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
-  return projectsDb.$queryRawUnsafe<ProjectRecordRow[]>(
+  return queryRows<ProjectRecordRow>(
     `
       SELECT id, collection, owner_id, data, created_at, updated_at
       FROM ${recordTable(schemaName)}
@@ -149,7 +153,7 @@ export async function listProjectRecords(schemaName: string, filters: ProjectRec
       ORDER BY created_at DESC
       LIMIT $${values.length}
     `,
-    ...values,
+    values,
   );
 }
 
@@ -157,30 +161,27 @@ export async function createProjectRecord(
   schemaName: string,
   input: { id: string; collection: string; ownerId: string | null; data: Record<string, unknown> },
 ) {
-  const rows = await projectsDb.$queryRawUnsafe<ProjectRecordRow[]>(
+  const rows = await queryRows<ProjectRecordRow>(
     `
       INSERT INTO ${recordTable(schemaName)} (id, collection, owner_id, data)
       VALUES ($1, $2, $3, $4::jsonb)
       RETURNING id, collection, owner_id, data, created_at, updated_at
     `,
-    input.id,
-    input.collection,
-    input.ownerId,
-    JSON.stringify(input.data),
+    [input.id, input.collection, input.ownerId, JSON.stringify(input.data)],
   );
 
   return rows[0];
 }
 
 export async function getProjectRecordById(schemaName: string, recordId: string) {
-  const rows = await projectsDb.$queryRawUnsafe<ProjectRecordRow[]>(
+  const rows = await queryRows<ProjectRecordRow>(
     `
       SELECT id, collection, owner_id, data, created_at, updated_at
       FROM ${recordTable(schemaName)}
       WHERE id = $1
       LIMIT 1
     `,
-    recordId,
+    [recordId],
   );
 
   return rows[0] ?? null;
@@ -206,27 +207,27 @@ export async function updateProjectRecord(
 
   values.push(recordId);
 
-  const rows = await projectsDb.$queryRawUnsafe<ProjectRecordRow[]>(
+  const rows = await queryRows<ProjectRecordRow>(
     `
       UPDATE ${recordTable(schemaName)}
       SET ${assignments.join(", ")}
       WHERE id = $${values.length}
       RETURNING id, collection, owner_id, data, created_at, updated_at
     `,
-    ...values,
+    values,
   );
 
   return rows[0] ?? null;
 }
 
 export async function deleteProjectRecord(schemaName: string, recordId: string) {
-  const rows = await projectsDb.$queryRawUnsafe<Array<{ id: string }>>(
+  const rows = await queryRows<{ id: string }>(
     `
       DELETE FROM ${recordTable(schemaName)}
       WHERE id = $1
       RETURNING id
     `,
-    recordId,
+    [recordId],
   );
 
   return rows.length > 0;
@@ -239,17 +240,17 @@ type AppUserRow = {
   email: string;
   password_hash: string | null;
   metadata: Record<string, unknown>;
-  created_at: Date;
-  updated_at: Date;
+  created_at: Date | string;
+  updated_at: Date | string;
 };
 
 type AppSessionRow = {
   id: string;
   app_user_id: string;
   token_hash: string;
-  expires_at: Date;
-  created_at: Date;
-  revoked_at: Date | null;
+  expires_at: Date | string;
+  created_at: Date | string;
+  revoked_at: Date | string | null;
 };
 
 function userTable(schemaName: string) {
@@ -261,23 +262,23 @@ function sessionTable(schemaName: string) {
 }
 
 export async function findAppUserByEmail(schemaName: string, email: string) {
-  const rows = await projectsDb.$queryRawUnsafe<AppUserRow[]>(
+  const rows = await queryRows<AppUserRow>(
     `SELECT id, email, password_hash, metadata, created_at, updated_at
      FROM ${userTable(schemaName)}
      WHERE email = $1
      LIMIT 1`,
-    email,
+    [email],
   );
   return rows[0] ?? null;
 }
 
 export async function findAppUserById(schemaName: string, id: string) {
-  const rows = await projectsDb.$queryRawUnsafe<AppUserRow[]>(
+  const rows = await queryRows<AppUserRow>(
     `SELECT id, email, password_hash, metadata, created_at, updated_at
      FROM ${userTable(schemaName)}
      WHERE id = $1
      LIMIT 1`,
-    id,
+    [id],
   );
   return rows[0] ?? null;
 }
@@ -286,14 +287,11 @@ export async function createAppUser(
   schemaName: string,
   input: { id: string; email: string; passwordHash: string; metadata: Record<string, unknown> },
 ) {
-  const rows = await projectsDb.$queryRawUnsafe<AppUserRow[]>(
+  const rows = await queryRows<AppUserRow>(
     `INSERT INTO ${userTable(schemaName)} (id, email, password_hash, metadata)
      VALUES ($1, $2, $3, $4::jsonb)
      RETURNING id, email, password_hash, metadata, created_at, updated_at`,
-    input.id,
-    input.email,
-    input.passwordHash,
-    JSON.stringify(input.metadata),
+    [input.id, input.email, input.passwordHash, JSON.stringify(input.metadata)],
   );
   return rows[0];
 }
@@ -302,45 +300,42 @@ export async function createAppSession(
   schemaName: string,
   input: { id: string; appUserId: string; tokenHash: string; expiresAt: Date },
 ) {
-  const rows = await projectsDb.$queryRawUnsafe<AppSessionRow[]>(
+  const rows = await queryRows<AppSessionRow>(
     `INSERT INTO ${sessionTable(schemaName)} (id, app_user_id, token_hash, expires_at)
      VALUES ($1, $2, $3, $4)
      RETURNING id, app_user_id, token_hash, expires_at, created_at, revoked_at`,
-    input.id,
-    input.appUserId,
-    input.tokenHash,
-    input.expiresAt,
+    [input.id, input.appUserId, input.tokenHash, input.expiresAt],
   );
   return rows[0];
 }
 
 export async function findActiveAppSession(schemaName: string, tokenHash: string) {
-  const rows = await projectsDb.$queryRawUnsafe<AppSessionRow[]>(
+  const rows = await queryRows<AppSessionRow>(
     `SELECT id, app_user_id, token_hash, expires_at, created_at, revoked_at
      FROM ${sessionTable(schemaName)}
      WHERE token_hash = $1
        AND revoked_at IS NULL
        AND expires_at > CURRENT_TIMESTAMP
      LIMIT 1`,
-    tokenHash,
+    [tokenHash],
   );
   return rows[0] ?? null;
 }
 
 export async function revokeAppSession(schemaName: string, sessionId: string) {
-  await projectsDb.$executeRawUnsafe(
+  await execute(
     `UPDATE ${sessionTable(schemaName)}
      SET revoked_at = CURRENT_TIMESTAMP
      WHERE id = $1`,
-    sessionId,
+    [sessionId],
   );
 }
 
 export async function revokeAllAppSessionsForUser(schemaName: string, appUserId: string) {
-  await projectsDb.$executeRawUnsafe(
+  await execute(
     `UPDATE ${sessionTable(schemaName)}
      SET revoked_at = CURRENT_TIMESTAMP
      WHERE app_user_id = $1 AND revoked_at IS NULL`,
-    appUserId,
+    [appUserId],
   );
 }
