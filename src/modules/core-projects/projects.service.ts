@@ -1,4 +1,9 @@
 import { coreDb } from "@/core/db/core";
+import {
+  getProjectStorageUsage,
+  provisionProjectSchema,
+  toProjectSchemaName,
+} from "@/core/db/projects";
 
 import type { ProjectService, ProjectSummary } from "./projects.schemas";
 
@@ -25,14 +30,18 @@ async function ensureUniqueKey(base: string) {
 
 function mapProject(item: {
   role: "owner" | "admin" | "member";
-  project: { id: string; key: string; displayName: string; createdAt: Date };
-}): ProjectSummary {
+  project: { id: string; key: string; schemaName: string; displayName: string; createdAt: Date };
+}, storageBytes: number): ProjectSummary {
   return {
     id: item.project.id,
     key: item.project.key,
+    schemaName: item.project.schemaName,
     displayName: item.project.displayName,
     role: item.role,
     createdAt: item.project.createdAt.toISOString(),
+    usage: {
+      storageBytes,
+    },
   };
 }
 
@@ -44,32 +53,53 @@ export const coreProjectsService = {
       orderBy: { createdAt: "desc" },
     });
 
-    return memberships.map(mapProject);
+    return Promise.all(
+      memberships.map(async (membership) => {
+        const storageBytes = await getProjectStorageUsage(membership.project.schemaName);
+        return mapProject(membership, storageBytes);
+      }),
+    );
   },
 
   async createForUser(userId: string, displayName: string): Promise<ProjectSummary> {
     const baseKey = toKey(displayName);
     const key = await ensureUniqueKey(baseKey);
+    const schemaName = toProjectSchemaName(key);
 
-    const project = await coreDb.project.create({
-      data: {
-        key,
-        displayName,
-      },
+    const { membership, project } = await coreDb.$transaction(async (tx) => {
+      const createdProject = await tx.project.create({
+        data: {
+          key,
+          schemaName,
+          displayName,
+        },
+      });
+
+      const createdMembership = await tx.projectMembership.create({
+        data: {
+          role: "owner",
+          userId,
+          projectId: createdProject.id,
+        },
+      });
+
+      return {
+        membership: createdMembership,
+        project: createdProject,
+      };
     });
 
-    const membership = await coreDb.projectMembership.create({
-      data: {
-        role: "owner",
-        userId,
-        projectId: project.id,
-      },
-    });
+    try {
+      await provisionProjectSchema(schemaName);
+    } catch (error) {
+      await coreDb.project.delete({ where: { id: project.id } });
+      throw error;
+    }
 
     return mapProject({
       role: membership.role,
       project,
-    });
+    }, 0);
   },
 
   async getServicesForUserProject(userId: string, projectId: string): Promise<ProjectService[]> {
@@ -97,7 +127,7 @@ export const coreProjectsService = {
       {
         id: "database",
         name: "Database",
-        description: "Isolated Postgres-backed data with Prisma migrations.",
+        description: "Isolated Postgres schema-backed data with usage tracking.",
         status: "available",
       },
       {

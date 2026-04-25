@@ -29,10 +29,27 @@ model User {
 model Project {
   id          String              @id @default(cuid())
   key         String              @unique
+  schemaName  String              @unique
   displayName String
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
+  apiKeys     ApiKey[]
   memberships ProjectMembership[]
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  projectId  String
+  name       String
+  keyPrefix  String
+  keyHash    String    @unique
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
 }
 
 model ProjectMembership {

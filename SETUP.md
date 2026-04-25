@@ -40,10 +40,9 @@ NODE_ENV=development
 PORT=3000
 LOG_LEVEL=info
 
-# Database URLs (3 separate databases)
+# Database URLs (control plane + shared app data)
 CORE_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/core_db
-PROJECT1_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/project1_db
-PROJECT2_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/project2_db
+PROJECTS_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/projects_db
 
 # Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
@@ -67,16 +66,15 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:3001
 npm run db:up
 ```
 
-This starts a PostgreSQL container with 3 pre-created databases.
+This starts a PostgreSQL container with the control-plane database and the shared projects database.
 
 **Option B: Use existing Postgres**
 
-Update `CORE_DATABASE_URL`, `PROJECT1_DATABASE_URL`, and `PROJECT2_DATABASE_URL` in [.env](.env) to your database connection strings, then create the three databases manually:
+Update `CORE_DATABASE_URL` and `PROJECTS_DATABASE_URL` in [.env](.env) to your database connection strings, then create the two databases manually:
 
 ```sql
 CREATE DATABASE core_db;
-CREATE DATABASE project1_db;
-CREATE DATABASE project2_db;
+CREATE DATABASE projects_db;
 ```
 
 ### 4. Run Database Migrations
@@ -88,8 +86,7 @@ npm run prisma:migrate
 This will:
 
 - Create tables in core_db (users, sessions, projects, memberships)
-- Create tables in project1_db (notes)
-- Create tables in project2_db (tasks)
+- Provision project metadata used to create per-project schemas inside projects_db
 
 ### 5. Seed Initial Data (Optional)
 
@@ -136,7 +133,7 @@ http://localhost:3000/test-client.html
 ### What You Can Do:
 
 1. **Sign in with Google** — Click the Google Sign-In button
-2. **Test project APIs** — Create notes, tasks, and list them
+2. **Create projects** — Each project provisions its own schema inside `projects_db`
 3. **View responses** — See formatted JSON responses in real-time
 4. **Copy tokens** — Access tokens visible for manual cURL testing
 

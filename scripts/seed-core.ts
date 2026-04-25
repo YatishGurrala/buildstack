@@ -4,20 +4,15 @@ const coreDb = new PrismaClient();
 
 async function main() {
   await coreDb.project.upsert({
-    where: { key: "project1" },
-    update: { displayName: "Project 1" },
-    create: {
-      key: "project1",
-      displayName: "Project 1",
+    where: { key: "buildstack-internal" },
+    update: {
+      displayName: "Buildstack Internal",
+      schemaName: "proj_buildstack_internal",
     },
-  });
-
-  await coreDb.project.upsert({
-    where: { key: "project2" },
-    update: { displayName: "Project 2" },
     create: {
-      key: "project2",
-      displayName: "Project 2",
+      key: "buildstack-internal",
+      schemaName: "proj_buildstack_internal",
+      displayName: "Buildstack Internal",
     },
   });
 

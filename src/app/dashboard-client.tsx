@@ -13,10 +13,30 @@ type AppUser = {
 type ProjectSummary = {
   id: string;
   key: string;
+  schemaName: string;
   displayName: string;
   role: "owner" | "admin" | "member";
   createdAt: string;
+  usage: {
+    storageBytes: number;
+  };
 };
+
+function formatStorage(bytes: number) {
+  if (bytes >= 1024 * 1024 * 1024) {
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  }
+
+  if (bytes >= 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  if (bytes >= 1024) {
+    return `${Math.round(bytes / 1024)} KB`;
+  }
+
+  return `${bytes} B`;
+}
 
 type ApiError = {
   error?: {
@@ -331,9 +351,11 @@ export function DashboardClient() {
                   </div>
                   <h2 className={styles.projectCardName}>{project.displayName}</h2>
                   <p className={styles.projectCardKey}>/{project.key}</p>
+                  <p className={styles.projectCardDate}>Schema {project.schemaName}</p>
                   <p className={styles.projectCardDate}>
                     Created {new Date(project.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </p>
+                  <p className={styles.projectCardDate}>Storage {formatStorage(project.usage.storageBytes)}</p>
                   <Link href={`/projects/${project.id}`} className={styles.openProjectBtn}>
                     Open project →
                   </Link>

@@ -590,6 +590,45 @@
   color: #fbbf24;
 }
 
+.apiKeyPanel {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.apiKeyReveal {
+  border: 1px solid var(--border-accent);
+  background: rgba(62, 207, 142, 0.08);
+  border-radius: var(--radius-md);
+  padding: 12px;
+}
+
+.apiKeyValue {
+  display: block;
+  overflow-x: auto;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  font-family: "Geist Mono", "Fira Code", monospace;
+}
+
+.apiKeyList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.apiKeyItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.18);
+  padding: 14px;
+}
+
 /* ─── Responsive ─────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
   .dashMain {

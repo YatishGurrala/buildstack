@@ -18,6 +18,7 @@ CREATE TABLE "User" (
 CREATE TABLE "Project" (
     "id" TEXT NOT NULL,
     "key" TEXT NOT NULL,
+    "schemaName" TEXT NOT NULL,
     "displayName" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -56,6 +57,9 @@ CREATE UNIQUE INDEX "User_googleSub_key" ON "User"("googleSub");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Project_key_key" ON "Project"("key");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Project_schemaName_key" ON "Project"("schemaName");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ProjectMembership_userId_projectId_key" ON "ProjectMembership"("userId", "projectId");

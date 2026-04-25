@@ -12,6 +12,15 @@ type Service = {
   status: "available" | "coming-soon";
 };
 
+type ApiKeySummary = {
+  id: string;
+  name: string;
+  keyPrefix: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+};
+
 const SERVICE_ICONS: Record<string, string> = {
   auth: "🔐",
   database: "🗄️",
@@ -38,6 +47,18 @@ export function ProjectServicesClient({ projectId }: { projectId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedServiceId, setSelectedServiceId] = useState<string>("");
+  const [csrfToken, setCsrfToken] = useState("");
+  const [apiKeys, setApiKeys] = useState<ApiKeySummary[]>([]);
+  const [apiKeyName, setApiKeyName] = useState("");
+  const [apiKeySecret, setApiKeySecret] = useState("");
+  const [apiBusy, setApiBusy] = useState(false);
+
+  const captureCsrf = (response: Response) => {
+    const token = response.headers.get("x-csrf-token");
+    if (token) {
+      setCsrfToken(token);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -47,6 +68,7 @@ export function ProjectServicesClient({ projectId }: { projectId: string }) {
         const response = await fetch(`/api/core/projects/${projectId}/services`, {
           credentials: "include",
         });
+        captureCsrf(response);
         const payload = await response.json();
         if (!active) return;
         if (!response.ok) {
@@ -66,6 +88,94 @@ export function ProjectServicesClient({ projectId }: { projectId: string }) {
     void run();
     return () => { active = false; };
   }, [projectId]);
+
+  useEffect(() => {
+    if (selectedServiceId !== "api") {
+      return;
+    }
+
+    let active = true;
+
+    const loadApiKeys = async () => {
+      try {
+        const response = await fetch(`/api/core/projects/${projectId}/api-keys`, {
+          credentials: "include",
+        });
+        captureCsrf(response);
+        const payload = await response.json();
+        if (!active) return;
+        if (!response.ok) {
+          setError(payload?.error?.message ?? "Could not load API keys.");
+          return;
+        }
+        setApiKeys(payload.data ?? []);
+      } catch {
+        if (active) setError("Network error. Please try again.");
+      }
+    };
+
+    void loadApiKeys();
+
+    return () => {
+      active = false;
+    };
+  }, [projectId, selectedServiceId]);
+
+  const createApiKey = async () => {
+    const name = apiKeyName.trim() || `Key ${apiKeys.length + 1}`;
+    setApiBusy(true);
+    setError("");
+    setApiKeySecret("");
+
+    try {
+      const response = await fetch(`/api/core/projects/${projectId}/api-keys`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+        },
+        body: JSON.stringify({ name }),
+      });
+      captureCsrf(response);
+      const payload = await response.json();
+      if (!response.ok) {
+        setError(payload?.error?.message ?? "Could not create API key.");
+        return;
+      }
+      setApiKeys((current) => [payload.data.apiKey, ...current]);
+      setApiKeySecret(payload.data.secret);
+      setApiKeyName("");
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setApiBusy(false);
+    }
+  };
+
+  const revokeApiKey = async (keyId: string) => {
+    setApiBusy(true);
+    setError("");
+
+    try {
+      const response = await fetch(`/api/core/projects/${projectId}/api-keys/${keyId}`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: csrfToken ? { "X-CSRF-Token": csrfToken } : {},
+      });
+      captureCsrf(response);
+      const payload = await response.json();
+      if (!response.ok) {
+        setError(payload?.error?.message ?? "Could not revoke API key.");
+        return;
+      }
+      setApiKeys((current) => current.filter((item) => item.id !== keyId));
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setApiBusy(false);
+    }
+  };
 
   const selectedService = services.find((service) => service.id === selectedServiceId) ?? services[0];
 
@@ -149,6 +259,60 @@ export function ProjectServicesClient({ projectId }: { projectId: string }) {
 
                 {selectedService.status !== "available" ? (
                   <p className={styles.serviceSoonNote}>This service is listed but not enabled yet for this project.</p>
+                ) : null}
+
+                {selectedService.id === "api" && selectedService.status === "available" ? (
+                  <div className={styles.apiKeyPanel}>
+                    <div className={styles.createFormRow}>
+                      <input
+                        className={styles.createInput}
+                        value={apiKeyName}
+                        onChange={(event) => setApiKeyName(event.target.value)}
+                        placeholder="API key name, e.g. Mobile app"
+                      />
+                      <button
+                        type="button"
+                        className={styles.primaryButton}
+                        onClick={() => void createApiKey()}
+                        disabled={apiBusy}
+                      >
+                        {apiBusy ? "Working..." : "Generate API key"}
+                      </button>
+                    </div>
+
+                    {apiKeySecret ? (
+                      <div className={styles.apiKeyReveal}>
+                        <p className={styles.projectCardDate}>Copy this key now. It will not be shown again.</p>
+                        <code className={styles.apiKeyValue}>{apiKeySecret}</code>
+                      </div>
+                    ) : null}
+
+                    <div className={styles.apiKeyList}>
+                      {apiKeys.length === 0 ? (
+                        <p className={styles.projectCardDate}>No API keys yet for this project.</p>
+                      ) : (
+                        apiKeys.map((item) => (
+                          <div key={item.id} className={styles.apiKeyItem}>
+                            <div>
+                              <p className={styles.createFormTitle}>{item.name}</p>
+                              <p className={styles.projectCardDate}>{item.keyPrefix}...</p>
+                              <p className={styles.projectCardDate}>
+                                Created {new Date(item.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              className={styles.serviceActionButton}
+                              onClick={() => void revokeApiKey(item.id)}
+                              disabled={apiBusy}
+                            >
+                              Revoke
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 ) : null}
               </section>
             ) : null}

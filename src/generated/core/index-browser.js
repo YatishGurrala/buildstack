@@ -133,9 +133,21 @@ exports.Prisma.UserScalarFieldEnum = {
 exports.Prisma.ProjectScalarFieldEnum = {
   id: 'id',
   key: 'key',
+  schemaName: 'schemaName',
   displayName: 'displayName',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ApiKeyScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  name: 'name',
+  keyPrefix: 'keyPrefix',
+  keyHash: 'keyHash',
+  lastUsedAt: 'lastUsedAt',
+  createdAt: 'createdAt',
+  revokedAt: 'revokedAt'
 };
 
 exports.Prisma.ProjectMembershipScalarFieldEnum = {
@@ -178,6 +190,7 @@ exports.MembershipRole = exports.$Enums.MembershipRole = {
 exports.Prisma.ModelName = {
   User: 'User',
   Project: 'Project',
+  ApiKey: 'ApiKey',
   ProjectMembership: 'ProjectMembership',
   Session: 'Session'
 };

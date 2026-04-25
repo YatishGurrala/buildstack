@@ -24,7 +24,8 @@ Deploy Buildstack to a VPS for production use. This guide covers deploying to a 
                      │
                      ▼
         ┌────────────────────────────────┐
-        │  PostgreSQL (3 Databases)      │
+        │ PostgreSQL (core_db +          │
+        │ projects_db, schema per app)   │
         │  (Docker Container)            │
         └────────────────────────────────┘
 ```
@@ -126,8 +127,7 @@ LOG_LEVEL=info
 # Database URLs (all point to the db service in docker-compose)
 POSTGRES_PASSWORD=your-secure-password
 CORE_DATABASE_URL=postgresql://postgres:your-secure-password@db:5432/core_db
-PROJECT1_DATABASE_URL=postgresql://postgres:your-secure-password@db:5432/project1_db
-PROJECT2_DATABASE_URL=postgresql://postgres:your-secure-password@db:5432/project2_db
+PROJECTS_DATABASE_URL=postgresql://postgres:your-secure-password@db:5432/projects_db
 
 # Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
