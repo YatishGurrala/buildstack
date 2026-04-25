@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../src/generated/core"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("CORE_DATABASE_URL")
+}
+
+enum MembershipRole {
+  owner
+  admin
+  member
+}
+
+model User {
+  id          String              @id @default(cuid())
+  email       String              @unique
+  name        String?
+  picture     String?
+  googleSub   String              @unique
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  memberships ProjectMembership[]
+  sessions    Session[]
+}
+
+model Project {
+  id          String              @id @default(cuid())
+  key         String              @unique
+  displayName String
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  memberships ProjectMembership[]
+}
+
+model ProjectMembership {
+  id        String         @id @default(cuid())
+  userId    String
+  projectId String
+  role      MembershipRole @default(member)
+  createdAt DateTime       @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+  @@index([projectId])
+}
+
+model Session {
+  id               String    @id @default(cuid())
+  userId           String
+  refreshTokenHash String
+  expiresAt        DateTime
+  createdAt        DateTime  @default(now())
+  revokedAt        DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}

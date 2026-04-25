@@ -1,0 +1,42 @@
+services:
+  prometheus:
+    image: prom/prometheus:v2.55.0
+    container_name: buildstack-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.listen-address=:9090
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./docker/prometheus/secrets:/etc/prometheus/secrets:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      api:
+        condition: service_started
+
+  grafana:
+    image: grafana/grafana-oss:11.3.0
+    container_name: buildstack-grafana
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-change-me-now}
+      GF_SERVER_DOMAIN: ${GRAFANA_DOMAIN:-localhost}
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://localhost:3001}
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      prometheus:
+        condition: service_started
+
+volumes:
+  prometheus_data:
+  grafana_data:

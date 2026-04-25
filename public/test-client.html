@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Buildstack Backend Tester</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #f5f5f5;
+        color: #333;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        margin-bottom: 10px;
+        color: #1a1a1a;
+      }
+
+      .subtitle {
+        color: #666;
+        margin-bottom: 30px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+
+      @media (max-width: 900px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .card h2 {
+        font-size: 18px;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 10px;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 5px;
+        font-size: 14px;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 12px;
+      }
+
+      textarea {
+        min-height: 80px;
+        resize: vertical;
+        font-family: monospace;
+      }
+
+      input:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #4285f4;
+        box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
+      }
+
+      button {
+        background: #4285f4;
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      button:hover {
+        background: #357ae8;
+      }
+
+      button:active {
+        background: #2f6dd9;
+      }
+
+      button.secondary {
+        background: #f1f1f1;
+        color: #333;
+        border: 1px solid #ddd;
+      }
+
+      button.secondary:hover {
+        background: #e8e8e8;
+      }
+
+      button.danger {
+        background: #d33;
+      }
+
+      button.danger:hover {
+        background: #c22;
+      }
+
+      .button-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .output {
+        background: #f9f9f9;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        padding: 12px;
+        margin-top: 15px;
+        max-height: 400px;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .status {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 10px;
+      }
+
+      .status.success {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .status.error {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .status.info {
+        background: #d1ecf1;
+        color: #0c5460;
+      }
+
+      .endpoint-list {
+        margin: 15px 0;
+      }
+
+      .endpoint-list li {
+        list-style: none;
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+        font-size: 13px;
+      }
+
+      .endpoint-list li:last-child {
+        border-bottom: none;
+      }
+
+      .method {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-weight: 500;
+        font-size: 11px;
+        margin-right: 8px;
+      }
+
+      .method.GET {
+        background: #e3f2fd;
+        color: #1976d2;
+      }
+
+      .method.POST {
+        background: #f3e5f5;
+        color: #7b1fa2;
+      }
+
+      .json-key {
+        color: #6f42c1;
+      }
+
+      .json-string {
+        color: #c85020;
+      }
+
+      .json-number {
+        color: #098658;
+      }
+
+      .instructions {
+        background: #fffbea;
+        border-left: 4px solid #ffc107;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+      }
+
+      .instructions h3 {
+        margin-bottom: 10px;
+        color: #d39e00;
+      }
+
+      .instructions ol {
+        margin-left: 20px;
+      }
+
+      .instructions li {
+        margin-bottom: 8px;
+        line-height: 1.4;
+      }
+
+      #auth-status {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 4px;
+        font-size: 13px;
+      }
+
+      #auth-status.logged-in {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      #auth-status.logged-out {
+        background: #f8d7da;
+        color: #721c24;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🚀 Buildstack Backend Tester</h1>
+      <p class="subtitle">Test your local backend API endpoints</p>
+
+      <div class="instructions">
+        <h3>⚡ Quick Start</h3>
+        <ol>
+          <li>Make sure your backend is running: <code>npm run dev</code></li>
+          <li>Click the "Google Sign-In" button below to authenticate</li>
+          <li>Once logged in, test endpoints in the panels</li>
+        </ol>
+      </div>
+
+      <!-- Auth Panel -->
+      <div class="grid">
+        <div class="card">
+          <h2>Authentication</h2>
+
+          <div id="google-signin-button"></div>
+
+          <div id="auth-status" class="logged-out">❌ Not logged in</div>
+
+          <div class="form-group" style="margin-top: 15px">
+            <label>Access Token</label>
+            <textarea id="access-token" readonly></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Refresh Token</label>
+            <textarea id="refresh-token" readonly></textarea>
+          </div>
+
+          <button class="danger" onclick="logout()" style="width: 100%">
+            Logout
+          </button>
+        </div>
+
+        <!-- Health Check -->
+        <div class="card">
+          <h2>Health Check</h2>
+          <p style="margin-bottom: 15px; color: #666; font-size: 13px">
+            Verify the backend is running
+          </p>
+          <button onclick="testHealth()" style="width: 100%">
+            Test Health
+          </button>
+          <div id="health-output" class="output" style="display: none"></div>
+        </div>
+      </div>
+
+      <!-- Project APIs -->
+      <div class="grid">
+        <!-- Project 1 -->
+        <div class="card">
+          <h2>Project 1: Notes</h2>
+
+          <div class="form-group">
+            <label>Note Title</label>
+            <input
+              type="text"
+              id="note-title"
+              placeholder="e.g., My First Note"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Note Body (optional)</label>
+            <textarea
+              id="note-body"
+              placeholder="Write your note here..."
+            ></textarea>
+          </div>
+
+          <div class="button-row">
+            <button onclick="createNote()">Create Note</button>
+            <button class="secondary" onclick="listNotes()">List Notes</button>
+          </div>
+
+          <div id="project1-output" class="output" style="display: none"></div>
+        </div>
+
+        <!-- Project 2 -->
+        <div class="card">
+          <h2>Project 2: Tasks</h2>
+
+          <div class="form-group">
+            <label>Task Title</label>
+            <input
+              type="text"
+              id="task-title"
+              placeholder="e.g., Build feature X"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Task Description (optional)</label>
+            <textarea
+              id="task-description"
+              placeholder="Describe your task..."
+            ></textarea>
+          </div>
+
+          <div class="button-row">
+            <button onclick="createTask()">Create Task</button>
+            <button class="secondary" onclick="listTasks()">List Tasks</button>
+          </div>
+
+          <div id="project2-output" class="output" style="display: none"></div>
+        </div>
+      </div>
+
+      <!-- API Reference -->
+      <div class="card" style="margin-top: 20px">
+        <h2>API Reference</h2>
+
+        <h3 style="margin-top: 15px; margin-bottom: 10px">Auth Endpoints</h3>
+        <ul class="endpoint-list">
+          <li>
+            <span class="method POST">POST</span> /api/core/auth/google
+            <br />
+            <small>Login with Google ID token</small>
+          </li>
+          <li>
+            <span class="method POST">POST</span> /api/core/auth/refresh
+            <br />
+            <small>Refresh access token</small>
+          </li>
+          <li>
+            <span class="method POST">POST</span> /api/core/auth/logout
+            <br />
+            <small>Logout and revoke session</small>
+          </li>
+        </ul>
+
+        <h3 style="margin-top: 15px; margin-bottom: 10px">
+          Project1 Endpoints
+        </h3>
+        <ul class="endpoint-list">
+          <li>
+            <span class="method GET">GET</span> /api/project1/notes
+            <br />
+            <small>Get all notes for current user</small>
+          </li>
+          <li>
+            <span class="method POST">POST</span> /api/project1/notes
+            <br />
+            <small>Create a new note (body: {title, body?})</small>
+          </li>
+        </ul>
+
+        <h3 style="margin-top: 15px; margin-bottom: 10px">
+          Project2 Endpoints
+        </h3>
+        <ul class="endpoint-list">
+          <li>
+            <span class="method GET">GET</span> /api/project2/tasks
+            <br />
+            <small>Get all tasks for current user</small>
+          </li>
+          <li>
+            <span class="method POST">POST</span> /api/project2/tasks
+            <br />
+            <small>Create a new task (body: {title, description?})</small>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = window.location.origin;
+      const GOOGLE_CLIENT_ID =
+        "179267377700-uuvka05i5t2g0tjte70ivg3692ko97um.apps.googleusercontent.com";
+
+      const DEBUG_TOKENS =
+        new URLSearchParams(window.location.search).get("debug") === "1";
+
+      let accessToken = "";
+      let isLoggedIn = false;
+      let csrfToken = "";
+
+      // Initialize Google Sign-In
+      window.onload = function () {
+        if (!DEBUG_TOKENS) {
+          document.querySelectorAll(".token-field").forEach((el) => {
+            el.style.display = "none";
+          });
+        }
+
+        google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleCredentialResponse,
+        });
+        google.accounts.id.renderButton(
+          document.getElementById("google-signin-button"),
+          {
+            theme: "outline",
+            size: "large",
+          },
+        );
+      };
+
+      async function handleCredentialResponse(response) {
+        const idToken = response.credential;
+
+        if (!csrfToken) {
+          await testHealth();
+        }
+
+        // Send to backend
+        fetch(`${API_BASE}/api/core/auth/google`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+          },
+          body: JSON.stringify({ idToken }),
+          credentials: "include",
+        })
+          .then(async (res) => {
+            const responseCsrfToken = res.headers.get("x-csrf-token");
+            if (responseCsrfToken) {
+              csrfToken = responseCsrfToken;
+            }
+            return res.json();
+          })
+          .then((data) => {
+            if (data.error) {
+              showError("Auth failed: " + data.error.message);
+              return;
+            }
+
+            accessToken = data.accessToken;
+            if (DEBUG_TOKENS) {
+              document.getElementById("access-token").value = accessToken;
+              document.getElementById("refresh-token").value = "HttpOnly cookie (not readable by JS)";
+            }
+            isLoggedIn = true;
+
+            const status = document.getElementById("auth-status");
+            status.className = "logged-in";
+            status.textContent = "";
+            status.innerHTML = "✅ Logged in as <strong></strong>";
+            status.querySelector("strong").textContent = data.user.email;
+          })
+          .catch((err) => {
+            showError("Login error: " + err.message);
+          });
+      }
+
+      async function apiCall(method, path, body = null) {
+        const options = {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        };
+
+        if (["POST", "PATCH", "PUT", "DELETE"].includes(method) && csrfToken) {
+          options.headers["X-CSRF-Token"] = csrfToken;
+        }
+
+        if (body) {
+          options.body = JSON.stringify(body);
+        }
+
+        try {
+          const res = await fetch(`${API_BASE}${path}`, options);
+          const responseCsrfToken = res.headers.get("x-csrf-token");
+          if (responseCsrfToken) {
+            csrfToken = responseCsrfToken;
+          }
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            return {
+              error: data.error || "Request failed",
+              status: res.status,
+            };
+          }
+
+          return data;
+        } catch (err) {
+          return { error: err.message };
+        }
+      }
+
+      function displayOutput(outputId, data) {
+        const output = document.getElementById(outputId);
+        output.style.display = "block";
+        output.innerHTML = "";
+
+        const statusDiv = document.createElement("div");
+        statusDiv.className = "status success";
+        statusDiv.textContent = "✅ Success";
+        output.appendChild(statusDiv);
+
+        const preEl = document.createElement("pre");
+        preEl.textContent = JSON.stringify(data, null, 2);
+        output.appendChild(preEl);
+      }
+
+      function showError(message) {
+        alert("❌ " + message);
+      }
+
+      async function testHealth() {
+        const result = await apiCall("GET", "/api/health");
+        if (result.error) {
+          showError(result.error);
+        } else {
+          displayOutput("health-output", result);
+        }
+      }
+
+      async function createNote() {
+        if (!isLoggedIn) {
+          showError("Please login first");
+          return;
+        }
+
+        if (!csrfToken) {
+          await testHealth();
+        }
+
+        const title = document.getElementById("note-title").value;
+        if (!title) {
+          showError("Please enter a title");
+          return;
+        }
+
+        const body = document.getElementById("note-body").value;
+        const result = await apiCall("POST", "/api/project1/notes", {
+          title,
+          body,
+        });
+
+        if (result.error) {
+          showError(result.error.message);
+        } else {
+          displayOutput("project1-output", result);
+          document.getElementById("note-title").value = "";
+          document.getElementById("note-body").value = "";
+        }
+      }
+
+      async function listNotes() {
+        if (!isLoggedIn) {
+          showError("Please login first");
+          return;
+        }
+
+        if (!csrfToken) {
+          await testHealth();
+        }
+
+        const result = await apiCall("GET", "/api/project1/notes");
+
+        if (result.error) {
+          showError(result.error.message);
+        } else {
+          displayOutput("project1-output", result);
+        }
+      }
+
+      async function createTask() {
+        if (!isLoggedIn) {
+          showError("Please login first");
+          return;
+        }
+
+        if (!csrfToken) {
+          await testHealth();
+        }
+
+        const title = document.getElementById("task-title").value;
+        if (!title) {
+          showError("Please enter a title");
+          return;
+        }
+
+        const description = document.getElementById("task-description").value;
+        const result = await apiCall("POST", "/api/project2/tasks", {
+          title,
+          description,
+        });
+
+        if (result.error) {
+          showError(result.error.message);
+        } else {
+          displayOutput("project2-output", result);
+          document.getElementById("task-title").value = "";
+          document.getElementById("task-description").value = "";
+        }
+      }
+
+      async function listTasks() {
+        if (!isLoggedIn) {
+          showError("Please login first");
+          return;
+        }
+
+        if (!csrfToken) {
+          await testHealth();
+        }
+
+        const result = await apiCall("GET", "/api/project2/tasks");
+
+        if (result.error) {
+          showError(result.error.message);
+        } else {
+          displayOutput("project2-output", result);
+        }
+      }
+
+      async function logout() {
+        const result = await apiCall("POST", "/api/core/auth/logout");
+
+        accessToken = "";
+        isLoggedIn = false;
+        csrfToken = "";
+
+        document.getElementById("access-token").value = "";
+        document.getElementById("refresh-token").value = "";
+
+        const status = document.getElementById("auth-status");
+        status.className = "logged-out";
+        status.textContent = "❌ Not logged in";
+
+        alert("✅ Logged out");
+      }
+    </script>
+  </body>
+</html>

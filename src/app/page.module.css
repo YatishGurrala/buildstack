@@ -1,0 +1,624 @@
+/* ─── Design tokens ──────────────────────────────────────────────────── */
+:root {
+  --bg: #0a0f0e;
+  --surface: #111916;
+  --surface-hover: #162018;
+  --border: rgba(255,255,255,0.08);
+  --border-accent: rgba(62,207,142,0.35);
+  --green: #3ecf8e;
+  --green-dim: rgba(62,207,142,0.12);
+  --text-primary: #f0f5f2;
+  --text-secondary: #8ba399;
+  --text-muted: #5a7066;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
+/* ─── App shell ──────────────────────────────────────────────────────── */
+.appShell {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), "Inter", "Segoe UI", sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Top bar ────────────────────────────────────────────────────────── */
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  height: 58px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(10,15,14,0.92);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topBarBrand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logoMark {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #1a6644, #3ecf8e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #052313;
+  font-weight: 800;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.logoText {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.topBarRight {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.topBarEmail {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+}
+
+.signOutBtn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.84rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.signOutBtn:hover {
+  border-color: var(--border-accent);
+  color: var(--green);
+}
+
+.backLink {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.backLink:hover {
+  color: var(--green);
+}
+
+/* ─── Main content area ──────────────────────────────────────────────── */
+.dashMain {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  padding: 40px 28px 64px;
+  flex: 1;
+}
+
+.dashHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.dashTitle {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.dashSub {
+  margin-top: 6px;
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+}
+
+/* ─── Buttons ────────────────────────────────────────────────────────── */
+.primaryButton {
+  padding: 10px 18px;
+  background: var(--green);
+  color: #052313;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s, transform 0.12s;
+}
+
+.primaryButton:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.primaryButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ─── Error / status ─────────────────────────────────────────────────── */
+.errorBanner {
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.3);
+  color: #fca5a5;
+  font-size: 0.88rem;
+  margin-bottom: 20px;
+}
+
+/* ─── Create form card ───────────────────────────────────────────────── */
+.createFormCard {
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: 24px;
+  margin-bottom: 28px;
+}
+
+.createFormTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+
+.createFormSub {
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+  margin: 0 0 18px;
+}
+
+.createFormRow {
+  display: flex;
+  gap: 10px;
+}
+
+.createInput {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,0.3);
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.createInput:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(62,207,142,0.14);
+}
+
+.createInput::placeholder {
+  color: var(--text-muted);
+}
+
+/* ─── Project grid ───────────────────────────────────────────────────── */
+.projectGrid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.projectCard {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.projectCard:hover {
+  border-color: var(--border-accent);
+  background: var(--surface-hover);
+}
+
+.projectCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.projectAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #1a6644, #3ecf8e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #052313;
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.projectRole {
+  font-size: 0.74rem;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--green-dim);
+  color: var(--green);
+  text-transform: capitalize;
+  font-weight: 600;
+}
+
+.projectCardName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.projectCardKey {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-family: "Geist Mono", "Fira Code", monospace;
+  margin: 0;
+}
+
+.projectCardDate {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0 0 10px;
+}
+
+.openProjectBtn {
+  display: inline-block;
+  padding: 9px 14px;
+  border-radius: var(--radius-md);
+  background: var(--green-dim);
+  color: var(--green);
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+  margin-top: auto;
+  text-align: center;
+}
+
+.openProjectBtn:hover {
+  background: rgba(62,207,142,0.2);
+}
+
+/* ─── Empty state ────────────────────────────────────────────────────── */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 80px 24px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  margin-bottom: 18px;
+}
+
+.emptyTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+
+.emptySub {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  max-width: 440px;
+  margin: 0 0 28px;
+  line-height: 1.6;
+}
+
+/* ─── Sign-in page ───────────────────────────────────────────────────── */
+.signInPage {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  font-family: var(--font-geist-sans), "Inter", "Segoe UI", sans-serif;
+}
+
+.signInCard {
+  width: 100%;
+  max-width: 420px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  padding: 44px 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0;
+}
+
+.signInLogo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.signInTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 10px;
+}
+
+.signInSub {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0 0 28px;
+  line-height: 1.6;
+}
+
+.signInError {
+  font-size: 0.86rem;
+  color: #fca5a5;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.25);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.signInHint {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  margin-top: 12px;
+}
+
+.googleSlot {
+  min-height: 44px;
+}
+
+.signInFallbackButton {
+  margin-top: 12px;
+  padding: 9px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-accent);
+  background: rgba(62, 207, 142, 0.08);
+  color: var(--green);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.signInFallbackButton:hover {
+  background: rgba(62, 207, 142, 0.16);
+}
+
+/* ─── Loading screen ─────────────────────────────────────────────────── */
+.loadingScreen {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-family: var(--font-geist-sans), "Inter", sans-serif;
+}
+
+.loadingText {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 60px 0;
+  text-align: center;
+}
+
+/* ─── Service grid ───────────────────────────────────────────────────── */
+.serviceGrid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.serviceCardButton {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color 0.15s, transform 0.12s;
+  border-top: 2px solid var(--service-color, var(--border));
+  cursor: pointer;
+}
+
+.serviceCardButton:hover {
+  border-color: var(--service-color, var(--border-accent));
+  transform: translateY(-1px);
+}
+
+.serviceCardButtonActive {
+  border-color: var(--service-color, var(--border-accent));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--service-color) 25%, transparent);
+}
+
+.serviceCard {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color 0.15s;
+  border-top: 2px solid var(--service-color, var(--border));
+}
+
+.serviceCard:hover {
+  border-color: var(--service-color, var(--border-accent));
+}
+
+.serviceCardIcon {
+  font-size: 2rem;
+}
+
+.serviceCardBody {
+  flex: 1;
+}
+
+.serviceCardName {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 6px;
+}
+
+.serviceCardDesc {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.statusAvailable {
+  display: inline-block;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--green-dim);
+  color: var(--green);
+  width: fit-content;
+}
+
+.statusSoon {
+  display: inline-block;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(245,158,11,0.1);
+  color: #fbbf24;
+  width: fit-content;
+}
+
+.serviceConsole {
+  margin-top: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: 20px;
+}
+
+.serviceConsoleHeader h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+
+.serviceConsoleHeader p {
+  margin: 8px 0 0;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.serviceActionRow {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.serviceActionButton {
+  border: 1px solid var(--border-accent);
+  background: rgba(62, 207, 142, 0.08);
+  color: var(--green);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.serviceActionButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.serviceSoonNote {
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: #fbbf24;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .dashMain {
+    padding: 24px 16px 48px;
+  }
+
+  .dashHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .createFormRow {
+    flex-direction: column;
+  }
+
+  .topBar {
+    padding: 0 16px;
+  }
+
+  .signInCard {
+    padding: 32px 24px;
+  }
+}
+
+/* ─── Keep legacy styles for any old markup ──────────────────────────── */
+.page {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), "Inter", sans-serif;
+}
+
