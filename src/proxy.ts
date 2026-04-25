@@ -5,20 +5,20 @@ import { recordRequestMetric } from './lib/analytics';
 import { emitErrorRateAlert } from './lib/monitoring';
 
 /**
- * Request logging middleware for all API routes
+ * Request logging proxy for all API routes
  * Logs: method, path, status, response time, and authenticated user (if available)
  * Excludes: sensitive data (tokens, passwords, request/response bodies)
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const startTime = Date.now();
   const requestId = crypto.randomUUID();
-  
+
   // Extract user context from auth token (if present)
   let userId: string | undefined;
   try {
     const authHeader = request.headers.get('authorization');
     const cookie = request.cookies.get('ACCESS_COOKIE')?.value;
-    
+
     const token = authHeader?.replace('Bearer ', '') || cookie;
     if (token) {
       const payload = await verifyAccessToken(token);
@@ -30,9 +30,9 @@ export async function middleware(request: NextRequest) {
 
   // Create response (pass-through for actual handler)
   const response = NextResponse.next();
-  
+
   const duration = Date.now() - startTime;
-  
+
   // Log request details
   logger.info(
     {
@@ -65,7 +65,7 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
-// Configure which routes to apply middleware to
+// Configure which routes to apply proxy to
 export const config = {
   matcher: [
     // Apply to all API routes

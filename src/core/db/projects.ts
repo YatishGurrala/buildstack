@@ -231,3 +231,116 @@ export async function deleteProjectRecord(schemaName: string, recordId: string) 
 
   return rows.length > 0;
 }
+
+// ─── App users & sessions ────────────────────────────────────────────────────
+
+type AppUserRow = {
+  id: string;
+  email: string;
+  password_hash: string | null;
+  metadata: Record<string, unknown>;
+  created_at: Date;
+  updated_at: Date;
+};
+
+type AppSessionRow = {
+  id: string;
+  app_user_id: string;
+  token_hash: string;
+  expires_at: Date;
+  created_at: Date;
+  revoked_at: Date | null;
+};
+
+function userTable(schemaName: string) {
+  return `${quoteIdentifier(schemaName)}.app_users`;
+}
+
+function sessionTable(schemaName: string) {
+  return `${quoteIdentifier(schemaName)}.app_sessions`;
+}
+
+export async function findAppUserByEmail(schemaName: string, email: string) {
+  const rows = await projectsDb.$queryRawUnsafe<AppUserRow[]>(
+    `SELECT id, email, password_hash, metadata, created_at, updated_at
+     FROM ${userTable(schemaName)}
+     WHERE email = $1
+     LIMIT 1`,
+    email,
+  );
+  return rows[0] ?? null;
+}
+
+export async function findAppUserById(schemaName: string, id: string) {
+  const rows = await projectsDb.$queryRawUnsafe<AppUserRow[]>(
+    `SELECT id, email, password_hash, metadata, created_at, updated_at
+     FROM ${userTable(schemaName)}
+     WHERE id = $1
+     LIMIT 1`,
+    id,
+  );
+  return rows[0] ?? null;
+}
+
+export async function createAppUser(
+  schemaName: string,
+  input: { id: string; email: string; passwordHash: string; metadata: Record<string, unknown> },
+) {
+  const rows = await projectsDb.$queryRawUnsafe<AppUserRow[]>(
+    `INSERT INTO ${userTable(schemaName)} (id, email, password_hash, metadata)
+     VALUES ($1, $2, $3, $4::jsonb)
+     RETURNING id, email, password_hash, metadata, created_at, updated_at`,
+    input.id,
+    input.email,
+    input.passwordHash,
+    JSON.stringify(input.metadata),
+  );
+  return rows[0];
+}
+
+export async function createAppSession(
+  schemaName: string,
+  input: { id: string; appUserId: string; tokenHash: string; expiresAt: Date },
+) {
+  const rows = await projectsDb.$queryRawUnsafe<AppSessionRow[]>(
+    `INSERT INTO ${sessionTable(schemaName)} (id, app_user_id, token_hash, expires_at)
+     VALUES ($1, $2, $3, $4)
+     RETURNING id, app_user_id, token_hash, expires_at, created_at, revoked_at`,
+    input.id,
+    input.appUserId,
+    input.tokenHash,
+    input.expiresAt,
+  );
+  return rows[0];
+}
+
+export async function findActiveAppSession(schemaName: string, tokenHash: string) {
+  const rows = await projectsDb.$queryRawUnsafe<AppSessionRow[]>(
+    `SELECT id, app_user_id, token_hash, expires_at, created_at, revoked_at
+     FROM ${sessionTable(schemaName)}
+     WHERE token_hash = $1
+       AND revoked_at IS NULL
+       AND expires_at > CURRENT_TIMESTAMP
+     LIMIT 1`,
+    tokenHash,
+  );
+  return rows[0] ?? null;
+}
+
+export async function revokeAppSession(schemaName: string, sessionId: string) {
+  await projectsDb.$executeRawUnsafe(
+    `UPDATE ${sessionTable(schemaName)}
+     SET revoked_at = CURRENT_TIMESTAMP
+     WHERE id = $1`,
+    sessionId,
+  );
+}
+
+export async function revokeAllAppSessionsForUser(schemaName: string, appUserId: string) {
+  await projectsDb.$executeRawUnsafe(
+    `UPDATE ${sessionTable(schemaName)}
+     SET revoked_at = CURRENT_TIMESTAMP
+     WHERE app_user_id = $1 AND revoked_at IS NULL`,
+    appUserId,
+  );
+}

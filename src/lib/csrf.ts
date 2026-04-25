@@ -1,4 +1,3 @@
-import crypto from "crypto";
 import { NextResponse } from "next/server";
 
 const CSRF_TOKEN_NAME = "csrf-token";
@@ -9,7 +8,9 @@ const TOKEN_LENGTH = 32;
  * Generate a new CSRF token
  */
 export function generateCsrfToken(): string {
-  return crypto.randomBytes(TOKEN_LENGTH).toString("hex");
+  const bytes = new Uint8Array(TOKEN_LENGTH);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 /**
