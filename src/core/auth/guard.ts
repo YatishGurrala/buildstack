@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 
 import { ACCESS_COOKIE } from "@/core/auth/session";
 import { coreDb } from "@/core/db/core";
+import { provisionProjectSchema } from "@/core/db/projects";
 import { verifyAccessToken } from "@/core/auth/tokens";
 import { sha256 } from "@/lib/hash";
 import { HttpError } from "@/lib/http";
@@ -56,6 +57,9 @@ export async function requireProjectApiKey(request: NextRequest, projectKey: str
     where: { id: record.id },
     data: { lastUsedAt: new Date() },
   });
+
+  // Backfill safety: ensure legacy projects created before schema provisioning still work.
+  await provisionProjectSchema(record.project.schemaName);
 
   return {
     id: record.id,

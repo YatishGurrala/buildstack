@@ -4,6 +4,7 @@ import { HttpError } from "@/lib/http";
 import { requireProjectApiKey, requireUser } from "@/core/auth/guard";
 import { verifyAccessToken } from "@/core/auth/tokens";
 import { coreDb } from "@/core/db/core";
+import { provisionProjectSchema } from "@/core/db/projects";
 
 jest.mock("@/core/auth/tokens", () => ({
   verifyAccessToken: jest.fn(),
@@ -18,8 +19,15 @@ jest.mock("@/core/db/core", () => ({
   },
 }));
 
+jest.mock("@/core/db/projects", () => ({
+  provisionProjectSchema: jest.fn(),
+}));
+
 const mockedVerifyAccessToken = verifyAccessToken as jest.MockedFunction<
   typeof verifyAccessToken
+>;
+const mockedProvisionProjectSchema = provisionProjectSchema as jest.MockedFunction<
+  typeof provisionProjectSchema
 >;
 
 const mockedCoreDb = coreDb as {
@@ -32,6 +40,7 @@ const mockedCoreDb = coreDb as {
 describe("requireUser", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedProvisionProjectSchema.mockResolvedValue();
   });
 
   it("uses bearer token when provided", async () => {
@@ -115,6 +124,7 @@ describe("requireProjectApiKey", () => {
       where: { id: "key1" },
       data: { lastUsedAt: expect.any(Date) },
     });
+    expect(mockedProvisionProjectSchema).toHaveBeenCalledWith("proj_payments");
   });
 
   it("throws when x-api-key is missing", async () => {
