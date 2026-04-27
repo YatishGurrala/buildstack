@@ -469,6 +469,8 @@
   transition: border-color 0.15s, transform 0.12s;
   border-top: 2px solid var(--service-color, var(--border));
   cursor: pointer;
+  text-decoration: none;
+  color: inherit;
 }
 
 .serviceCardButton:hover {
@@ -517,6 +519,12 @@
   color: var(--text-secondary);
   line-height: 1.55;
   margin: 0;
+}
+
+.serviceCardCta {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--green);
 }
 
 .statusAvailable {
@@ -577,6 +585,133 @@
   font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
+}
+
+.serviceMetaGrid {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.serviceMetaCard {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.18);
+  padding: 14px;
+}
+
+.serviceMetaLabel {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.serviceMetaValue {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.serviceSection {
+  margin-top: 18px;
+}
+
+.serviceSectionTitle {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.serviceList {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-secondary);
+  display: grid;
+  gap: 8px;
+  line-height: 1.55;
+}
+
+.serviceOptionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.serviceOptionCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.18);
+  padding: 14px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, transform 0.12s;
+}
+
+.serviceOptionCard:hover {
+  border-color: var(--border-accent);
+  transform: translateY(-1px);
+}
+
+.serviceOptionTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.serviceOptionText {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.endpointList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.endpointItem {
+  display: block;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.18);
+  padding: 12px;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  font-family: "Geist Mono", "Fira Code", monospace;
+}
+
+.analyticsRouteList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.analyticsRouteItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.18);
+  padding: 14px;
+}
+
+.analyticsRouteStats {
+  display: flex;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  white-space: nowrap;
 }
 
 .serviceActionButton:disabled {
