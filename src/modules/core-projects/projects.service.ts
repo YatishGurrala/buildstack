@@ -1,11 +1,13 @@
 import { coreDb } from "@/core/db/core";
 import {
+  getProjectAuthSummary,
+  getProjectDatabaseSummary,
   getProjectStorageUsage,
   provisionProjectSchema,
   toProjectSchemaName,
 } from "@/core/db/projects";
 
-import type { ProjectService, ProjectSummary } from "./projects.schemas";
+import type { ProjectService, ProjectServiceDetails, ProjectSummary } from "./projects.schemas";
 
 function toKey(displayName: string) {
   return displayName
@@ -151,5 +153,49 @@ export const coreProjectsService = {
     ];
 
     return base;
+  },
+
+  async getServiceDetailsForUserProject(
+    userId: string,
+    projectId: string,
+    service: "auth" | "database" | "api",
+  ): Promise<ProjectServiceDetails | null> {
+    const membership = await coreDb.projectMembership.findFirst({
+      where: {
+        userId,
+        projectId,
+      },
+      include: {
+        project: true,
+      },
+    });
+
+    if (!membership) {
+      return null;
+    }
+
+    if (service === "auth") {
+      const auth = await getProjectAuthSummary(membership.project.schemaName);
+      return { service, auth };
+    }
+
+    if (service === "database") {
+      const database = await getProjectDatabaseSummary(membership.project.schemaName);
+      return { service, database };
+    }
+
+    const activeApiKeys = await coreDb.apiKey.count({
+      where: {
+        projectId,
+        revokedAt: null,
+      },
+    });
+
+    return {
+      service,
+      api: {
+        activeApiKeys,
+      },
+    };
   },
 };

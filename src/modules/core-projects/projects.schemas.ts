@@ -24,3 +24,35 @@ export type ProjectService = {
   description: string;
   status: "available" | "coming-soon";
 };
+
+export type ProjectServiceDetails =
+  | {
+      service: "auth";
+      auth: {
+        totalUsers: number;
+        activeSessions: number;
+        totalSessions: number;
+        recentUsers: Array<{
+          id: string;
+          email: string;
+          createdAt: string;
+        }>;
+      };
+    }
+  | {
+      service: "database";
+      database: {
+        totalRecords: number;
+        totalCollections: number;
+        collections: Array<{
+          name: string;
+          count: number;
+        }>;
+      };
+    }
+  | {
+      service: "api";
+      api: {
+        activeApiKeys: number;
+      };
+    };

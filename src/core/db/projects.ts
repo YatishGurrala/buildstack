@@ -261,6 +261,60 @@ function sessionTable(schemaName: string) {
   return `${quoteIdentifier(schemaName)}.app_sessions`;
 }
 
+export async function getProjectAuthSummary(schemaName: string) {
+  const [userCountRows, activeSessionRows, totalSessionRows, recentUsers] = await Promise.all([
+    queryRows<{ count: string | number }>(`SELECT COUNT(*)::int AS count FROM ${userTable(schemaName)}`),
+    queryRows<{ count: string | number }>(
+      `SELECT COUNT(*)::int AS count
+       FROM ${sessionTable(schemaName)}
+       WHERE revoked_at IS NULL AND expires_at > CURRENT_TIMESTAMP`,
+    ),
+    queryRows<{ count: string | number }>(`SELECT COUNT(*)::int AS count FROM ${sessionTable(schemaName)}`),
+    queryRows<{ id: string; email: string; created_at: Date | string }>(
+      `SELECT id, email, created_at
+       FROM ${userTable(schemaName)}
+       ORDER BY created_at DESC
+       LIMIT 10`,
+    ),
+  ]);
+
+  return {
+    totalUsers: Number(userCountRows[0]?.count ?? 0),
+    activeSessions: Number(activeSessionRows[0]?.count ?? 0),
+    totalSessions: Number(totalSessionRows[0]?.count ?? 0),
+    recentUsers: recentUsers.map((user) => ({
+      id: user.id,
+      email: user.email,
+      createdAt: new Date(user.created_at).toISOString(),
+    })),
+  };
+}
+
+export async function getProjectDatabaseSummary(schemaName: string) {
+  const [recordCountRows, collectionCountRows, collections] = await Promise.all([
+    queryRows<{ count: string | number }>(`SELECT COUNT(*)::int AS count FROM ${recordTable(schemaName)}`),
+    queryRows<{ count: string | number }>(
+      `SELECT COUNT(DISTINCT collection)::int AS count FROM ${recordTable(schemaName)}`,
+    ),
+    queryRows<{ name: string; count: string | number }>(
+      `SELECT collection AS name, COUNT(*)::int AS count
+       FROM ${recordTable(schemaName)}
+       GROUP BY collection
+       ORDER BY COUNT(*) DESC, collection ASC
+       LIMIT 10`,
+    ),
+  ]);
+
+  return {
+    totalRecords: Number(recordCountRows[0]?.count ?? 0),
+    totalCollections: Number(collectionCountRows[0]?.count ?? 0),
+    collections: collections.map((collection) => ({
+      name: collection.name,
+      count: Number(collection.count),
+    })),
+  };
+}
+
 export async function findAppUserByEmail(schemaName: string, email: string) {
   const rows = await queryRows<AppUserRow>(
     `SELECT id, email, password_hash, metadata, created_at, updated_at
