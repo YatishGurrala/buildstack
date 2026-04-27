@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "start:prod": "npm run prisma:deploy && next start",
     "lint": "eslint",
     "prisma:generate:core": "prisma generate --schema prisma/core/schema.prisma",
     "prisma:generate": "npm run prisma:generate:core",

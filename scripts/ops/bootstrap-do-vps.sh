@@ -78,8 +78,7 @@ if [[ "$created_env" == "true" ]]; then
   upsert_env "PORT" "3000" .env
   upsert_env "POSTGRES_PASSWORD" "$DB_PASSWORD" .env
   upsert_env "CORE_DATABASE_URL" "postgresql://postgres:${DB_PASSWORD}@db:5432/core_db" .env
-  upsert_env "PROJECT1_DATABASE_URL" "postgresql://postgres:${DB_PASSWORD}@db:5432/project1_db" .env
-  upsert_env "PROJECT2_DATABASE_URL" "postgresql://postgres:${DB_PASSWORD}@db:5432/project2_db" .env
+  upsert_env "PROJECTS_DATABASE_URL" "postgresql://postgres:${DB_PASSWORD}@db:5432/projects_db" .env
   upsert_env "JWT_SECRET" "$JWT_SECRET_VALUE" .env
   upsert_env "ACCESS_TOKEN_TTL_MINUTES" "15" .env
   upsert_env "REFRESH_TOKEN_TTL_DAYS" "30" .env
@@ -93,8 +92,10 @@ fi
 echo "[6/9] Building and starting API stack"
 docker compose up -d --build
 
-echo "[7/9] Running migrations"
-docker compose exec -T api npm run prisma:deploy
+echo "[7/9] Waiting for API container to be healthy (migrations run on start:prod)"
+timeout 120 bash -c 'until curl -sf http://localhost:3000/api/health > /dev/null; do sleep 3; done' \
+  && echo "API is healthy" \
+  || { echo "API did not become healthy within 120s — check: docker compose logs api"; exit 1; }
 
 echo "[8/9] Installing Nginx site config"
 if [[ ! -f deploy/nginx/buildstack.conf ]]; then
