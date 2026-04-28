@@ -136,6 +136,7 @@ export function ProjectServicesClient({
   const [apiKeys, setApiKeys] = useState<ApiKeySummary[]>([]);
   const [apiKeyName, setApiKeyName] = useState("");
   const [apiKeySecret, setApiKeySecret] = useState("");
+  const [sessionApiKeySecrets, setSessionApiKeySecrets] = useState<Record<string, string>>({});
   const [apiBusy, setApiBusy] = useState(false);
   const [copiedSnippet, setCopiedSnippet] = useState("");
   const [analytics, setAnalytics] = useState<AnalyticsSnapshot | null>(null);
@@ -310,6 +311,10 @@ export function ProjectServicesClient({
       }
       setApiKeys((current) => [payload.data.apiKey, ...current]);
       setApiKeySecret(payload.data.secret);
+      setSessionApiKeySecrets((current) => ({
+        ...current,
+        [payload.data.apiKey.id]: payload.data.secret,
+      }));
       setApiKeyName("");
     } catch {
       setError("Network error. Please try again.");
@@ -373,6 +378,11 @@ export function ProjectServicesClient({
         return;
       }
       setApiKeys((current) => current.filter((item) => item.id !== keyId));
+      setSessionApiKeySecrets((current) => {
+        const next = { ...current };
+        delete next[keyId];
+        return next;
+      });
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -1076,7 +1086,7 @@ export function ProjectServicesClient({
                       ) : null}
 
                       <p className={styles.projectCardDate}>
-                        Existing keys show only a prefix. Full secrets are intentionally not retrievable after creation.
+                        Existing keys show only a prefix. Full secrets are only available when the key is created in this browser session.
                       </p>
                       <p className={styles.projectCardDate}>Revoke a key first, then delete it permanently if no longer needed.</p>
 
@@ -1104,13 +1114,23 @@ export function ProjectServicesClient({
                                 </p>
                               </div>
                               <div className={styles.serviceActionRow}>
-                                <button
-                                  type="button"
-                                  className={styles.serviceActionButton}
-                                  onClick={() => void copySnippet(`prefix-${item.id}`, `${item.keyPrefix}...`)}
-                                >
-                                  {copiedSnippet === `prefix-${item.id}` ? "Copied" : "Copy prefix"}
-                                </button>
+                                {sessionApiKeySecrets[item.id] ? (
+                                  <button
+                                    type="button"
+                                    className={styles.serviceActionButton}
+                                    onClick={() => void copySnippet(`full-${item.id}`, sessionApiKeySecrets[item.id])}
+                                  >
+                                    {copiedSnippet === `full-${item.id}` ? "Copied" : "Copy full key"}
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className={styles.serviceActionButton}
+                                    onClick={() => void copySnippet(`prefix-${item.id}`, `${item.keyPrefix}...`)}
+                                  >
+                                    {copiedSnippet === `prefix-${item.id}` ? "Copied" : "Copy prefix"}
+                                  </button>
+                                )}
                                 {!item.revokedAt ? (
                                   <button
                                     type="button"
