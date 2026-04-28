@@ -21,7 +21,12 @@ export async function DELETE(
     await validateCsrfToken(request);
     const user = await requireUser(request);
     const { projectId, keyId } = await context.params;
-    await projectApiKeysService.revokeForUserProject(user.sub, projectId, keyId);
+    const mode = request.nextUrl.searchParams.get("mode");
+    if (mode === "delete") {
+      await projectApiKeysService.deleteForUserProject(user.sub, projectId, keyId);
+    } else {
+      await projectApiKeysService.revokeForUserProject(user.sub, projectId, keyId);
+    }
     const response = jsonResponse(request, { ok: true });
     applyCors(request, response);
     return response;

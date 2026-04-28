@@ -334,6 +334,44 @@ export function ProjectServicesClient({
         setError(payload?.error?.message ?? "Could not revoke API key.");
         return;
       }
+      setApiKeys((current) =>
+        current.map((item) =>
+          item.id === keyId
+            ? {
+                ...item,
+                revokedAt: new Date().toISOString(),
+              }
+            : item,
+        ),
+      );
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setApiBusy(false);
+    }
+  };
+
+  const deleteApiKey = async (keyId: string) => {
+    const confirmed = window.confirm("Delete this revoked API key permanently?");
+    if (!confirmed) {
+      return;
+    }
+
+    setApiBusy(true);
+    setError("");
+
+    try {
+      const response = await fetch(`/api/core/projects/${projectId}/api-keys/${keyId}?mode=delete`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: csrfToken ? { "X-CSRF-Token": csrfToken } : {},
+      });
+      captureCsrf(response);
+      const payload = await response.json();
+      if (!response.ok) {
+        setError(payload?.error?.message ?? "Could not delete API key.");
+        return;
+      }
       setApiKeys((current) => current.filter((item) => item.id !== keyId));
     } catch {
       setError("Network error. Please try again.");
@@ -1032,10 +1070,15 @@ export function ProjectServicesClient({
 
                       {apiKeySecret ? (
                         <div className={styles.apiKeyReveal}>
-                          <p className={styles.projectCardDate}>Copy this key now. It will not be shown again.</p>
+                          <p className={styles.projectCardDate}>Copy this key now. Full secret is shown only once for security.</p>
                           <code className={styles.apiKeyValue}>{apiKeySecret}</code>
                         </div>
                       ) : null}
+
+                      <p className={styles.projectCardDate}>
+                        Existing keys show only a prefix. Full secrets are intentionally not retrievable after creation.
+                      </p>
+                      <p className={styles.projectCardDate}>Revoke a key first, then delete it permanently if no longer needed.</p>
 
                       <div className={styles.apiKeyList}>
                         {apiKeys.length === 0 ? (
@@ -1049,15 +1092,45 @@ export function ProjectServicesClient({
                                 <p className={styles.projectCardDate}>
                                   Created {new Date(item.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                                 </p>
+                                <p className={styles.projectCardDate}>
+                                  Status: {item.revokedAt ? "Revoked" : "Active"}
+                                  {item.revokedAt
+                                    ? ` (${new Date(item.revokedAt).toLocaleDateString("en-US", {
+                                        month: "short",
+                                        day: "numeric",
+                                        year: "numeric",
+                                      })})`
+                                    : ""}
+                                </p>
                               </div>
-                              <button
-                                type="button"
-                                className={styles.serviceActionButton}
-                                onClick={() => void revokeApiKey(item.id)}
-                                disabled={apiBusy}
-                              >
-                                Revoke
-                              </button>
+                              <div className={styles.serviceActionRow}>
+                                <button
+                                  type="button"
+                                  className={styles.serviceActionButton}
+                                  onClick={() => void copySnippet(`prefix-${item.id}`, `${item.keyPrefix}...`)}
+                                >
+                                  {copiedSnippet === `prefix-${item.id}` ? "Copied" : "Copy prefix"}
+                                </button>
+                                {!item.revokedAt ? (
+                                  <button
+                                    type="button"
+                                    className={styles.serviceActionButton}
+                                    onClick={() => void revokeApiKey(item.id)}
+                                    disabled={apiBusy}
+                                  >
+                                    Revoke
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className={styles.serviceActionButton}
+                                    onClick={() => void deleteApiKey(item.id)}
+                                    disabled={apiBusy}
+                                  >
+                                    Delete
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           ))
                         )}

@@ -42,11 +42,8 @@ export const projectApiKeysService = {
     await requireProjectMembership(userId, projectId);
 
     const keys = await coreDb.apiKey.findMany({
-      where: {
-        projectId,
-        revokedAt: null,
-      },
-      orderBy: { createdAt: "desc" },
+      where: { projectId },
+      orderBy: [{ revokedAt: "asc" }, { createdAt: "desc" }],
     });
 
     return keys.map(mapApiKey);
@@ -89,6 +86,29 @@ export const projectApiKeysService = {
     await coreDb.apiKey.update({
       where: { id: keyId },
       data: { revokedAt: new Date() },
+    });
+  },
+
+  async deleteForUserProject(userId: string, projectId: string, keyId: string): Promise<void> {
+    await requireProjectMembership(userId, projectId);
+
+    const apiKey = await coreDb.apiKey.findFirst({
+      where: {
+        id: keyId,
+        projectId,
+      },
+    });
+
+    if (!apiKey) {
+      throw new HttpError(404, "API key not found", "API_KEY_NOT_FOUND");
+    }
+
+    if (!apiKey.revokedAt) {
+      throw new HttpError(400, "Revoke API key before deleting", "API_KEY_MUST_BE_REVOKED");
+    }
+
+    await coreDb.apiKey.delete({
+      where: { id: keyId },
     });
   },
 };

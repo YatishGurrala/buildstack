@@ -748,6 +748,13 @@
   cursor: not-allowed;
 }
 
+.serviceActionRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
 .connectSnippetBlock {
   border: 1px solid var(--border);
   border-radius: 10px;
