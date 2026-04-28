@@ -938,6 +938,142 @@
   margin-top: 12px;
 }
 
+.tableVizCanvas {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 50% -20%, rgba(0, 112, 243, 0.2), transparent 45%),
+    linear-gradient(180deg, rgba(11, 21, 36, 0.98), rgba(7, 14, 25, 0.99));
+  padding: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.tableVizToolbarFloating {
+  width: fit-content;
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(139, 144, 160, 0.35);
+  border-radius: 999px;
+  background: rgba(17, 27, 42, 0.8);
+  padding: 6px;
+}
+
+.tableVizToolButton,
+.tableVizToolButtonPrimary {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  color: var(--text-muted);
+  background: transparent;
+}
+
+.tableVizToolButtonPrimary {
+  background: rgba(0, 112, 243, 0.22);
+  border-color: rgba(0, 112, 243, 0.45);
+  color: #d8e7ff;
+}
+
+.tableVizStage {
+  position: relative;
+  height: 340px;
+  border: 1px solid rgba(139, 144, 160, 0.22);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(0, 112, 243, 0.08), transparent 45%),
+    linear-gradient(180deg, rgba(9, 17, 30, 0.85), rgba(8, 14, 24, 0.95));
+}
+
+.tableVizLinks {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.tableVizLinks path {
+  fill: none;
+  stroke: #2e8fff;
+  stroke-width: 2;
+  stroke-dasharray: 4 6;
+  opacity: 0.85;
+}
+
+.tableVizNodeCard {
+  position: absolute;
+  width: 250px;
+  border: 1px solid rgba(139, 144, 160, 0.35);
+  border-radius: 12px;
+  background: rgba(23, 31, 43, 0.92);
+  box-shadow: 0 12px 32px rgba(3, 8, 16, 0.45);
+  padding: 10px;
+}
+
+.tableVizUsers {
+  left: 26px;
+  top: 68px;
+}
+
+.tableVizPosts {
+  left: 372px;
+  top: 158px;
+}
+
+.tableVizComments {
+  right: 26px;
+  top: 80px;
+}
+
+.tableVizNodeCard h4,
+.tableVizNodeMuted h4 {
+  margin: 0;
+  font-size: 0.84rem;
+  color: #ebf2ff;
+}
+
+.tableVizNodeCard ul {
+  margin: 8px 0 0;
+  padding-left: 14px;
+  display: grid;
+  gap: 5px;
+  color: #c9d6ea;
+  font-size: 0.74rem;
+}
+
+.tableVizNodeMuted p {
+  margin: 6px 0 0;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.tableVizCollectionRow {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.tableVizNodeMuted {
+  border: 1px solid rgba(139, 144, 160, 0.28);
+  border-radius: 10px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.tableVizFooter {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text-dim);
+  font-size: 0.73rem;
+}
+
 .serviceSoonNote {
   color: #f7c9ff;
   font-size: 0.82rem;
@@ -964,6 +1100,22 @@
 
   .storageLayout {
     grid-template-columns: 1fr;
+  }
+
+  .tableVizStage {
+    height: auto;
+    display: grid;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .tableVizNodeCard {
+    position: static;
+    width: 100%;
+  }
+
+  .tableVizLinks {
+    display: none;
   }
 }
 

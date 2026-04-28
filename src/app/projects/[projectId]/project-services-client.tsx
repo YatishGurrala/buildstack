@@ -564,6 +564,11 @@ export function ProjectServicesClient({
     }
 
     if (selectedKnownServiceId === "database") {
+      const collectionNodes =
+        serviceDetails?.service === "database"
+          ? serviceDetails.database.collections.slice(0, 4)
+          : [];
+
       return (
         <>
           {serviceDetails?.service === "database" ? (
@@ -581,6 +586,69 @@ export function ProjectServicesClient({
               </div>
             </div>
           ) : null}
+
+          <div className={styles.serviceSection}>
+            <h3 className={styles.serviceSectionTitle}>Table visualization</h3>
+            <div className={styles.tableVizCanvas}>
+              <div className={styles.tableVizToolbarFloating}>
+                <button type="button" className={styles.tableVizToolButton}>100%</button>
+                <button type="button" className={styles.tableVizToolButton}>Auto Layout</button>
+                <button type="button" className={styles.tableVizToolButtonPrimary}>Copy as SQL</button>
+              </div>
+
+              <div className={styles.tableVizStage}>
+                <svg className={styles.tableVizLinks} viewBox="0 0 1000 480" preserveAspectRatio="none" aria-hidden="true">
+                  <path d="M270 180 C 380 180, 420 240, 500 240" />
+                  <path d="M670 240 C 760 240, 780 170, 860 150" />
+                </svg>
+
+                <article className={`${styles.tableVizNodeCard} ${styles.tableVizUsers}`}>
+                  <h4>users</h4>
+                  <ul>
+                    <li>id uuid</li>
+                    <li>email varchar(255)</li>
+                    <li>created_at timestamp</li>
+                  </ul>
+                </article>
+
+                <article className={`${styles.tableVizNodeCard} ${styles.tableVizPosts}`}>
+                  <h4>records</h4>
+                  <ul>
+                    <li>id uuid</li>
+                    <li>owner_id uuid</li>
+                    <li>collection text</li>
+                    <li>data jsonb</li>
+                  </ul>
+                </article>
+
+                <article className={`${styles.tableVizNodeCard} ${styles.tableVizComments}`}>
+                  <h4>sessions</h4>
+                  <ul>
+                    <li>id uuid</li>
+                    <li>user_id uuid</li>
+                    <li>token text</li>
+                    <li>expires_at timestamptz</li>
+                  </ul>
+                </article>
+              </div>
+
+              {collectionNodes.length > 0 ? (
+                <div className={styles.tableVizCollectionRow}>
+                  {collectionNodes.map((collection) => (
+                    <article key={collection.name} className={styles.tableVizNodeMuted}>
+                      <h4>{collection.name}</h4>
+                      <p>{collection.count} rows</p>
+                    </article>
+                  ))}
+                </div>
+              ) : null}
+
+              <div className={styles.tableVizFooter}>
+                <p>{collectionNodes.length || 3} logical tables connected</p>
+                <p>Schema: {project.schemaName}</p>
+              </div>
+            </div>
+          </div>
 
           <div id="database-schema" className={styles.serviceSection}>
             <h3 className={styles.serviceSectionTitle}>Schema details</h3>
