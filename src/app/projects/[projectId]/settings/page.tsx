@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import styles from "../../../page.module.css";
+import { ProjectOverviewCards } from "../project-overview-cards";
 
 export default async function ProjectSettingsPage({
   params,
@@ -43,6 +44,8 @@ export default async function ProjectSettingsPage({
               <p className={styles.dashSub}>Manage configuration, environment variables, and destructive actions.</p>
             </div>
           </div>
+
+          <ProjectOverviewCards projectId={projectId} />
 
           <section className={styles.serviceConsole}>
             <div className={styles.serviceSection}>

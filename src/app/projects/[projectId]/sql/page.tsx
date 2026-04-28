@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import styles from "../../../page.module.css";
+import { ProjectOverviewCards } from "../project-overview-cards";
 
 export default async function ProjectSqlPage({
   params,
@@ -43,6 +44,8 @@ export default async function ProjectSqlPage({
               <p className={styles.dashSub}>Run queries, inspect schema, and review query results.</p>
             </div>
           </div>
+
+          <ProjectOverviewCards projectId={projectId} />
 
           <section className={styles.serviceConsole}>
             <div className={styles.sqlHeader}>
