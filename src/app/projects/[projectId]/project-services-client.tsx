@@ -346,6 +346,7 @@ export function ProjectServicesClient({
     ? services.find((service) => service.id === serviceId)
     : null;
   const selectedKnownServiceId = selectedService && isKnownServiceId(selectedService.id) ? selectedService.id : null;
+  const isApiView = selectedKnownServiceId === "api";
   const authBasePath = project ? `/api/v1/${project.key}/auth` : "";
   const recordsBasePath = project ? `/api/v1/${project.key}/records` : "";
   const projectApiKey = apiKeySecret || "<your-api-key>";
@@ -680,18 +681,33 @@ export function ProjectServicesClient({
 
           <div id="api-connect" className={styles.serviceSection}>
             <h3 className={styles.serviceSectionTitle}>Connect your frontend</h3>
-            <div className={styles.serviceMetaGrid}>
-              <div className={styles.serviceMetaCard}>
-                <p className={styles.serviceMetaLabel}>Base URL</p>
-                <p className={styles.serviceMetaValue}>{publicBaseUrl}</p>
+            <div className={styles.apiConfigCard}>
+              <div className={styles.apiConfigRow}>
+                <div>
+                  <p className={styles.serviceMetaLabel}>Project URL</p>
+                  <p className={styles.serviceMetaValue}>{publicBaseUrl}/api/v1/{project.key}</p>
+                </div>
+                <button
+                  type="button"
+                  className={styles.serviceActionButton}
+                  onClick={() => void copySnippet("project-url", `${publicBaseUrl}/api/v1/${project.key}`)}
+                >
+                  {copiedSnippet === "project-url" ? "Copied" : "Copy"}
+                </button>
               </div>
-              <div className={styles.serviceMetaCard}>
-                <p className={styles.serviceMetaLabel}>Project key</p>
-                <p className={styles.serviceMetaValue}>{project.key}</p>
-              </div>
-              <div className={styles.serviceMetaCard}>
-                <p className={styles.serviceMetaLabel}>API key</p>
-                <p className={styles.serviceMetaValue}>{apiKeySecret ? "Using latest generated key" : "Generate one below"}</p>
+              <div className={styles.apiConfigRow}>
+                <div>
+                  <p className={styles.serviceMetaLabel}>Project API Key</p>
+                  <p className={styles.serviceMetaValue}>{apiKeySecret ? apiKeySecret : "Generate one below"}</p>
+                </div>
+                <button
+                  type="button"
+                  className={styles.serviceActionButton}
+                  onClick={() => void copySnippet("api-key", apiKeySecret || "")}
+                  disabled={!apiKeySecret}
+                >
+                  {copiedSnippet === "api-key" ? "Copied" : "Copy"}
+                </button>
               </div>
             </div>
 
@@ -777,174 +793,224 @@ export function ProjectServicesClient({
   };
 
   return (
-    <div className={styles.appShell}>
-      {/* Top bar */}
-      <header className={styles.topBar}>
-        <div className={styles.topBarBrand}>
+    <div className={styles.consoleShell}>
+      <aside className={styles.consoleSidebar}>
+        <div className={styles.sidebarBrand}>
           <span className={styles.logoMark}>B</span>
-          <span className={styles.logoText}>Buildstack</span>
-        </div>
-        <div className={styles.topBarRight}>
-          <Link href="/" className={styles.backLink}>← All projects</Link>
-        </div>
-      </header>
-
-      <main className={styles.dashMain}>
-        <div className={styles.dashHeader}>
           <div>
-            <h1 className={styles.dashTitle}>{serviceId ? `${selectedService?.name ?? "Service"} service` : "Project services"}</h1>
-            <p className={styles.dashSub}>
-              {serviceId
-                ? "This page shows the service status, configuration, and the management options available for this project."
-                : "Everything your backend needs — auth, data, APIs, and analytics — isolated to this project."}
-            </p>
+            <p className={styles.logoText}>Buildstack</p>
+            <p className={styles.sidebarMeta}>{project?.displayName ?? "Project Cluster"}</p>
           </div>
         </div>
 
-        {loading ? (
-          <p className={styles.loadingText}>Loading services…</p>
-        ) : error ? (
-          <p className={styles.errorBanner}>{error}</p>
-        ) : (
-          <>
-            <ul className={styles.serviceGrid}>
-              {services.map((service) => {
-                const icon = isKnownServiceId(service.id) ? SERVICE_ICONS[service.id] : "🔧";
-                const color = isKnownServiceId(service.id) ? SERVICE_COLORS[service.id] : "#6b7280";
-                const isSelected = serviceId === service.id;
-                return (
-                  <li key={service.id}>
-                    <Link
-                      href={getServiceHref(projectId, service.id)}
-                      className={`${styles.serviceCardButton} ${isSelected ? styles.serviceCardButtonActive : ""}`}
-                      style={{ "--service-color": color } as React.CSSProperties}
-                      aria-current={isSelected ? "page" : undefined}
-                    >
-                      <div className={styles.serviceCardIcon}>{icon}</div>
-                      <div className={styles.serviceCardBody}>
-                        <h2 className={styles.serviceCardName}>{service.name}</h2>
-                        <p className={styles.serviceCardDesc}>{service.description}</p>
-                      </div>
-                      <span className={service.status === "available" ? styles.statusAvailable : styles.statusSoon}>
-                        {service.status === "available" ? "Available" : "Coming soon"}
-                      </span>
-                      <span className={styles.serviceCardCta}>{isSelected ? "Viewing service" : "Open service →"}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+        <nav className={styles.sidebarNav}>
+          <Link href={`/projects/${projectId}`} className={`${styles.sidebarNavItem} ${!serviceId ? styles.sidebarNavItemActive : ""}`}>
+            Overview
+          </Link>
+          <Link href={`/projects/${projectId}/database`} className={`${styles.sidebarNavItem} ${serviceId === "database" ? styles.sidebarNavItemActive : ""}`}>
+            Database
+          </Link>
+          <Link href={`/projects/${projectId}/auth`} className={`${styles.sidebarNavItem} ${serviceId === "auth" ? styles.sidebarNavItemActive : ""}`}>
+            Authentication
+          </Link>
+          <Link href={`/projects/${projectId}/api`} className={`${styles.sidebarNavItem} ${serviceId === "api" ? styles.sidebarNavItemActive : ""}`}>
+            API
+          </Link>
+          <Link href={`/projects/${projectId}/analytics`} className={`${styles.sidebarNavItem} ${serviceId === "analytics" ? styles.sidebarNavItemActive : ""}`}>
+            Analytics
+          </Link>
+          <Link href={`/projects/${projectId}/storage`} className={`${styles.sidebarNavItem} ${serviceId === "storage" ? styles.sidebarNavItemActive : ""}`}>
+            Storage
+          </Link>
+          <Link href={`/projects/${projectId}/sql`} className={styles.sidebarNavItem}>
+            SQL Editor
+          </Link>
+          <Link href={`/projects/${projectId}/settings`} className={styles.sidebarNavItem}>
+            Settings
+          </Link>
+          <Link href={`/`} className={styles.sidebarNavItem}>All Projects</Link>
+        </nav>
+      </aside>
 
-            {selectedService && selectedKnownServiceId ? (
-              <section className={styles.serviceConsole}>
-                <header className={styles.serviceConsoleHeader}>
-                  <h2>
-                    {SERVICE_ICONS[selectedKnownServiceId]} {selectedService.name} console
-                  </h2>
-                  <p>{selectedService.description}</p>
-                </header>
+      <div className={styles.consoleMain}>
+        <header className={styles.consoleTopbar}>
+          <p className={styles.topbarPath}>Projects &gt; {project?.displayName ?? "Project"} {serviceId ? `&gt; ${serviceId}` : ""}</p>
+          <Link href="/" className={styles.secondaryButtonLink}>Back to projects</Link>
+        </header>
 
-                <div className={styles.serviceMetaGrid}>
-                  {SERVICE_INSIGHTS[selectedKnownServiceId].map((item) => (
-                    <div key={item.label} className={styles.serviceMetaCard}>
-                      <p className={styles.serviceMetaLabel}>{item.label}</p>
-                      <p className={styles.serviceMetaValue}>{item.value}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className={styles.serviceSection}>
-                  <h3 className={styles.serviceSectionTitle}>Configuration in this project</h3>
-                  <ul className={styles.serviceList}>
-                    {SERVICE_CONFIGURATION[selectedKnownServiceId].map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className={styles.serviceSection}>
-                  <h3 className={styles.serviceSectionTitle}>Available options</h3>
-                  {renderServiceOptions()}
-                </div>
-
-                {renderServiceSpecificDetail()}
-
-                {selectedService.status !== "available" ? (
-                  <p className={styles.serviceSoonNote}>This service is listed but not enabled yet for this project.</p>
-                ) : null}
-
-                {selectedKnownServiceId === "api" && selectedService.status === "available" ? (
-                  <div id="api-keys" className={styles.apiKeyPanel}>
-                    <div className={styles.createFormRow}>
-                      <input
-                        className={styles.createInput}
-                        value={apiKeyName}
-                        onChange={(event) => setApiKeyName(event.target.value)}
-                        placeholder="API key name, e.g. Mobile app"
-                      />
-                      <button
-                        type="button"
-                        className={styles.primaryButton}
-                        onClick={() => void createApiKey()}
-                        disabled={apiBusy}
-                      >
-                        {apiBusy ? "Working..." : "Generate API key"}
-                      </button>
-                    </div>
-
-                    {apiKeySecret ? (
-                      <div className={styles.apiKeyReveal}>
-                        <p className={styles.projectCardDate}>Copy this key now. It will not be shown again.</p>
-                        <code className={styles.apiKeyValue}>{apiKeySecret}</code>
-                      </div>
-                    ) : null}
-
-                    <div className={styles.apiKeyList}>
-                      {apiKeys.length === 0 ? (
-                        <p className={styles.projectCardDate}>No API keys yet for this project.</p>
-                      ) : (
-                        apiKeys.map((item) => (
-                          <div key={item.id} className={styles.apiKeyItem}>
-                            <div>
-                              <p className={styles.createFormTitle}>{item.name}</p>
-                              <p className={styles.projectCardDate}>{item.keyPrefix}...</p>
-                              <p className={styles.projectCardDate}>
-                                Created {new Date(item.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                              </p>
-                            </div>
-                            <button
-                              type="button"
-                              className={styles.serviceActionButton}
-                              onClick={() => void revokeApiKey(item.id)}
-                              disabled={apiBusy}
-                            >
-                              Revoke
-                            </button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                ) : null}
-              </section>
-            ) : !serviceId ? (
-              <section className={styles.serviceConsole}>
-                <header className={styles.serviceConsoleHeader}>
-                  <h2>Open a service</h2>
-                  <p>Select any service card to open its dedicated page and inspect what is running, how it is configured, and which options are available for this project.</p>
-                </header>
-                <div className={styles.serviceSection}>
-                  <h3 className={styles.serviceSectionTitle}>Quick connect</h3>
-                  <p className={styles.projectCardDate}>Need integration details right away? Open the API service connect panel.</p>
-                  <Link href={`/projects/${projectId}/api#api-connect`} className={styles.openProjectBtn}>
-                    Open connect panel →
-                  </Link>
-                </div>
-              </section>
+        <main className={styles.consoleContent}>
+          <div className={styles.dashHeader}>
+            <div>
+              <h1 className={styles.dashTitle}>
+                {isApiView ? "API Settings" : serviceId ? `${selectedService?.name ?? "Service"}` : "Service Hub"}
+              </h1>
+              <p className={styles.dashSub}>
+                {isApiView
+                  ? "Manage project identifiers, keys, and frontend integration from one API control surface."
+                  : serviceId
+                  ? "Manage this service configuration, health, and integration options for the current project."
+                  : "Monitor core services, inspect live metrics, and open any console for deeper controls."}
+              </p>
+            </div>
+            {isApiView ? (
+              <button
+                type="button"
+                className={styles.primaryButton}
+                onClick={() => {
+                  const panel = document.getElementById("api-keys");
+                  if (panel) {
+                    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }
+                }}
+              >
+                Generate New Key
+              </button>
             ) : null}
-          </>
-        )}
-      </main>
+          </div>
+
+          {loading ? (
+            <p className={styles.loadingText}>Loading services...</p>
+          ) : error ? (
+            <p className={styles.errorBanner}>{error}</p>
+          ) : (
+            <>
+              <ul className={styles.serviceGrid}>
+                {services.map((service) => {
+                  const icon = isKnownServiceId(service.id) ? SERVICE_ICONS[service.id] : "::";
+                  const color = isKnownServiceId(service.id) ? SERVICE_COLORS[service.id] : "#6b7280";
+                  const isSelected = serviceId === service.id;
+                  return (
+                    <li key={service.id}>
+                      <Link
+                        href={getServiceHref(projectId, service.id)}
+                        className={`${styles.serviceCardButton} ${isSelected ? styles.serviceCardButtonActive : ""}`}
+                        style={{ "--service-color": color } as React.CSSProperties}
+                        aria-current={isSelected ? "page" : undefined}
+                      >
+                        <div className={styles.serviceCardIcon}>{icon}</div>
+                        <div className={styles.serviceCardBody}>
+                          <h2 className={styles.serviceCardName}>{service.name}</h2>
+                          <p className={styles.serviceCardDesc}>{service.description}</p>
+                        </div>
+                        <span className={service.status === "available" ? styles.statusAvailable : styles.statusSoon}>
+                          {service.status === "available" ? "LIVE" : "COMING SOON"}
+                        </span>
+                        <span className={styles.serviceCardCta}>{isSelected ? "Viewing" : "Open"}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              {selectedService && selectedKnownServiceId ? (
+                <section className={styles.serviceConsole}>
+                  <header className={styles.serviceConsoleHeader}>
+                    <h2>{SERVICE_ICONS[selectedKnownServiceId]} {selectedService.name} Console</h2>
+                    <p>{selectedService.description}</p>
+                  </header>
+
+                  <div className={styles.serviceMetaGrid}>
+                    {SERVICE_INSIGHTS[selectedKnownServiceId].map((item) => (
+                      <div key={item.label} className={styles.serviceMetaCard}>
+                        <p className={styles.serviceMetaLabel}>{item.label}</p>
+                        <p className={styles.serviceMetaValue}>{item.value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className={styles.serviceSection}>
+                    <h3 className={styles.serviceSectionTitle}>Configuration</h3>
+                    <ul className={styles.serviceList}>
+                      {SERVICE_CONFIGURATION[selectedKnownServiceId].map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className={styles.serviceSection}>
+                    <h3 className={styles.serviceSectionTitle}>Available Options</h3>
+                    {renderServiceOptions()}
+                  </div>
+
+                  {renderServiceSpecificDetail()}
+
+                  {selectedService.status !== "available" ? (
+                    <p className={styles.serviceSoonNote}>This service is listed but not enabled yet for this project.</p>
+                  ) : null}
+
+                  {selectedKnownServiceId === "api" && selectedService.status === "available" ? (
+                    <div id="api-keys" className={styles.apiKeyPanel}>
+                      <div className={styles.createFormRow}>
+                        <input
+                          className={styles.createInput}
+                          value={apiKeyName}
+                          onChange={(event) => setApiKeyName(event.target.value)}
+                          placeholder="API key name, e.g. Mobile app"
+                        />
+                        <button
+                          type="button"
+                          className={styles.primaryButton}
+                          onClick={() => void createApiKey()}
+                          disabled={apiBusy}
+                        >
+                          {apiBusy ? "Working..." : "Generate API key"}
+                        </button>
+                      </div>
+
+                      {apiKeySecret ? (
+                        <div className={styles.apiKeyReveal}>
+                          <p className={styles.projectCardDate}>Copy this key now. It will not be shown again.</p>
+                          <code className={styles.apiKeyValue}>{apiKeySecret}</code>
+                        </div>
+                      ) : null}
+
+                      <div className={styles.apiKeyList}>
+                        {apiKeys.length === 0 ? (
+                          <p className={styles.projectCardDate}>No API keys yet for this project.</p>
+                        ) : (
+                          apiKeys.map((item) => (
+                            <div key={item.id} className={styles.apiKeyItem}>
+                              <div>
+                                <p className={styles.createFormTitle}>{item.name}</p>
+                                <p className={styles.projectCardDate}>{item.keyPrefix}...</p>
+                                <p className={styles.projectCardDate}>
+                                  Created {new Date(item.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                className={styles.serviceActionButton}
+                                onClick={() => void revokeApiKey(item.id)}
+                                disabled={apiBusy}
+                              >
+                                Revoke
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
+                </section>
+              ) : !serviceId ? (
+                <section className={styles.serviceConsole}>
+                  <header className={styles.serviceConsoleHeader}>
+                    <h2>Project Overview</h2>
+                    <p>Open any service card to view detailed controls, runtime data, and integration snippets.</p>
+                  </header>
+                  <div className={styles.serviceSection}>
+                    <h3 className={styles.serviceSectionTitle}>Quick connect</h3>
+                    <p className={styles.projectCardDate}>Need integration details now? Open the API service connect panel.</p>
+                    <Link href={`/projects/${projectId}/api#api-connect`} className={styles.openProjectBtn}>
+                      Open connect panel
+                    </Link>
+                  </div>
+                </section>
+              ) : null}
+            </>
+          )}
+        </main>
+      </div>
     </div>
   );
 }

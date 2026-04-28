@@ -72,6 +72,13 @@ export function DashboardClient() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
+  const totalStorageBytes = projects.reduce((sum, project) => sum + project.usage.storageBytes, 0);
+  const lastCreatedAt = projects.length
+    ? [...projects]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+        ?.createdAt
+    : null;
+
   const captureCsrf = useCallback(
     (response: Response) => {
       const token = response.headers.get("x-csrf-token");
@@ -253,36 +260,44 @@ export function DashboardClient() {
 
   // ─── Dashboard ─────────────────────────────────────────────────────────────
   return (
-    <div className={styles.appShell}>
+    <div className={styles.consoleShell}>
+      <aside className={styles.consoleSidebar}>
+        <div className={styles.sidebarBrand}>
+          <span className={styles.logoMark}>B</span>
+          <div>
+            <p className={styles.logoText}>Buildstack</p>
+            <p className={styles.sidebarMeta}>Production Cluster</p>
+          </div>
+        </div>
+        <nav className={styles.sidebarNav}>
+          <Link href="/" className={`${styles.sidebarNavItem} ${styles.sidebarNavItemActive}`}>Projects</Link>
+          <a href="https://builddeck.io" className={styles.sidebarNavItem}>Documentation</a>
+          <a href="https://builddeck.io/contact" className={styles.sidebarNavItem}>Support</a>
+          <a href="https://builddeck.io/about" className={styles.sidebarNavItem}>Settings</a>
+        </nav>
+        <div className={styles.sidebarFooter}>{user?.email ?? "internal@builddeck.io"}</div>
+      </aside>
 
-        {/* Top bar */}
-        <header className={styles.topBar}>
-          <div className={styles.topBarBrand}>
-            <span className={styles.logoMark}>B</span>
-            <span className={styles.logoText}>Buildstack</span>
-          </div>
-          <div className={styles.topBarRight}>
-            <span className={styles.topBarEmail}>{user?.email}</span>
-          </div>
+      <div className={styles.consoleMain}>
+        <header className={styles.consoleTopbar}>
+          <p className={styles.topbarPath}>Dashboard / Projects</p>
+          <button
+            type="button"
+            className={styles.primaryButton}
+            onClick={() => setShowCreateForm(true)}
+          >
+            + Create Project
+          </button>
         </header>
 
-        {/* Main content */}
-        <main className={styles.dashMain}>
+        <main className={styles.consoleContent}>
           <div className={styles.dashHeader}>
             <div>
-              <h1 className={styles.dashTitle}>All projects</h1>
-              <p className={styles.dashSub}>Each project is an isolated workspace with its own auth, database, and APIs.</p>
+              <h1 className={styles.dashTitle}>Projects</h1>
+              <p className={styles.dashSub}>Manage your backend environments, keys, and service access from one place.</p>
             </div>
-            <button
-              type="button"
-              className={styles.primaryButton}
-              onClick={() => setShowCreateForm((v) => !v)}
-            >
-              {showCreateForm ? "Cancel" : "+ New project"}
-            </button>
           </div>
 
-          {/* Error message */}
           {statusMessage ? <p className={styles.errorBanner}>{statusMessage}</p> : null}
 
           {newProjectApiKeySecret ? (
@@ -292,39 +307,12 @@ export function DashboardClient() {
             </div>
           ) : null}
 
-          {/* Create form */}
-          {showCreateForm ? (
-            <div className={styles.createFormCard}>
-              <h2 className={styles.createFormTitle}>Create a new project</h2>
-              <p className={styles.createFormSub}>Give your project a name. You can always rename it later.</p>
-              <div className={styles.createFormRow}>
-                <input
-                  className={styles.createInput}
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                  placeholder="e.g. Payments API, User Auth Service"
-                  onKeyDown={(e) => { if (e.key === "Enter") void createProject(); }}
-                  autoFocus
-                />
-                <button
-                  type="button"
-                  className={styles.primaryButton}
-                  onClick={createProject}
-                  disabled={!projectName.trim()}
-                >
-                  Create project
-                </button>
-              </div>
-            </div>
-          ) : null}
-
-          {/* Project grid or empty state */}
-          {projects.length === 0 && !showCreateForm ? (
+          {projects.length === 0 ? (
             <div className={styles.emptyState}>
-              <div className={styles.emptyIcon}>📦</div>
+              <div className={styles.emptyIcon}>::</div>
               <h2 className={styles.emptyTitle}>No projects yet</h2>
               <p className={styles.emptySub}>
-                Create your first project to get a backend workspace with auth, a database, REST APIs, and analytics — ready out of the box.
+                Create your first project to provision auth, records, APIs, and analytics in one isolated workspace.
               </p>
               <button
                 type="button"
@@ -335,32 +323,89 @@ export function DashboardClient() {
               </button>
             </div>
           ) : (
-            <ul className={styles.projectGrid}>
-              {projects.map((project) => (
-                <li key={project.id} className={styles.projectCard}>
-                  <div className={styles.projectCardTop}>
-                    <span className={styles.projectAvatar}>{project.displayName.charAt(0).toUpperCase()}</span>
-                    <span className={styles.projectRole}>{project.role}</span>
-                  </div>
-                  <h2 className={styles.projectCardName}>{project.displayName}</h2>
-                  <p className={styles.projectCardKey}>/{project.key}</p>
-                  <p className={styles.projectCardDate}>Schema {project.schemaName}</p>
-                  <p className={styles.projectCardDate}>
-                    Created {new Date(project.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                  </p>
-                  <p className={styles.projectCardDate}>Storage {formatStorage(project.usage.storageBytes)}</p>
-                  <Link href={`/projects/${project.id}`} className={styles.openProjectBtn}>
-                    Open project →
-                  </Link>
-                  <Link href={`/projects/${project.id}/api#api-connect`} className={styles.openProjectBtn}>
-                    Connect app →
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <div className={styles.dashboardGrid}>
+              <ul className={styles.projectGrid}>
+                {projects.map((project) => (
+                  <li key={project.id} className={styles.projectCard}>
+                    <div className={styles.projectCardTop}>
+                      <span className={styles.projectAvatar}>{project.displayName.charAt(0).toUpperCase()}</span>
+                      <span className={styles.projectRole}>{project.role}</span>
+                    </div>
+                    <h2 className={styles.projectCardName}>{project.displayName}</h2>
+                    <p className={styles.projectCardKey}>bs_key_{project.key.slice(0, 4)}...{project.key.slice(-2)}</p>
+                    <p className={styles.projectCardDate}>Schema {project.schemaName}</p>
+                    <div className={styles.storageTrack}>
+                      <span style={{ width: `${Math.max(8, Math.min(100, Math.round(project.usage.storageBytes / (1024 * 1024))))}%` }} />
+                    </div>
+                    <p className={styles.projectCardDate}>Storage {formatStorage(project.usage.storageBytes)}</p>
+                    <div className={styles.projectActions}>
+                      <Link href={`/projects/${project.id}`} className={styles.openProjectBtn}>Open</Link>
+                      <Link href={`/projects/${project.id}/api#api-connect`} className={styles.openProjectBtnSecondary}>Connect</Link>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+
+              <section className={styles.quickStatsCard}>
+                <h2 className={styles.quickStatsTitle}>Quick Stats</h2>
+                <div className={styles.quickStatRow}>
+                  <span>Total Projects</span>
+                  <strong>{projects.length}</strong>
+                </div>
+                <div className={styles.quickStatRow}>
+                  <span>Total Storage</span>
+                  <strong>{formatStorage(totalStorageBytes)}</strong>
+                </div>
+                <div className={styles.quickStatRow}>
+                  <span>Latest Created</span>
+                  <strong>
+                    {lastCreatedAt
+                      ? new Date(lastCreatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                      : "-"}
+                  </strong>
+                </div>
+              </section>
+            </div>
           )}
         </main>
       </div>
+
+      {showCreateForm ? (
+        <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
+          <div className={styles.createFormCard}>
+            <h2 className={styles.createFormTitle}>Create New Project</h2>
+            <p className={styles.createFormSub}>Initialize a new backend workspace and generate a default API key.</p>
+            <div className={styles.createFormRow}>
+              <input
+                className={styles.createInput}
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                placeholder="e.g. buildstack-dashboard-v3"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    void createProject();
+                  }
+                }}
+                autoFocus
+              />
+            </div>
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.secondaryButton} onClick={() => setShowCreateForm(false)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.primaryButton}
+                onClick={createProject}
+                disabled={!projectName.trim()}
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
