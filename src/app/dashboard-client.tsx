@@ -271,7 +271,7 @@ export function DashboardClient() {
         </div>
         <nav className={styles.sidebarNav}>
           <Link href="/" className={`${styles.sidebarNavItem} ${styles.sidebarNavItemActive}`}>Projects</Link>
-          <a href="https://builddeck.io" className={styles.sidebarNavItem}>Documentation</a>
+          <Link href="/docs/connect-app" className={styles.sidebarNavItem}>Documentation</Link>
           <a href="https://builddeck.io/contact" className={styles.sidebarNavItem}>Support</a>
           <a href="https://builddeck.io/about" className={styles.sidebarNavItem}>Settings</a>
         </nav>

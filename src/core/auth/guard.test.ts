@@ -6,12 +6,26 @@ import { verifyAccessToken } from "@/core/auth/tokens";
 import { coreDb } from "@/core/db/core";
 import { provisionProjectSchema } from "@/core/db/projects";
 
+jest.mock("@/lib/env", () => {
+  const actual = jest.requireActual("@/lib/env");
+  return {
+    ...actual,
+    env: {
+      ...actual.env,
+      SKIP_AUTH: false,
+    },
+  };
+});
+
 jest.mock("@/core/auth/tokens", () => ({
   verifyAccessToken: jest.fn(),
 }));
 
 jest.mock("@/core/db/core", () => ({
   coreDb: {
+    user: {
+      upsert: jest.fn(),
+    },
     apiKey: {
       findFirst: jest.fn(),
       update: jest.fn(),
@@ -30,7 +44,10 @@ const mockedProvisionProjectSchema = provisionProjectSchema as jest.MockedFuncti
   typeof provisionProjectSchema
 >;
 
-const mockedCoreDb = coreDb as {
+const mockedCoreDb = coreDb as unknown as {
+  user: {
+    upsert: jest.Mock;
+  };
   apiKey: {
     findFirst: jest.Mock;
     update: jest.Mock;

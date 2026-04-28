@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { middleware } from "@/middleware";
+import { proxy } from "@/proxy";
 import { logger } from "@/lib/logger";
 import { verifyAccessToken } from "@/core/auth/tokens";
 import { recordRequestMetric } from "@/lib/analytics";
@@ -23,7 +23,7 @@ jest.mock("@/lib/monitoring", () => ({
   emitErrorRateAlert: jest.fn(),
 }));
 
-describe("middleware", () => {
+describe("proxy", () => {
   const mockedLoggerInfo = logger.info as jest.Mock;
   const mockedVerifyAccessToken = verifyAccessToken as jest.Mock;
   const mockedRecordRequestMetric = recordRequestMetric as jest.Mock;
@@ -40,7 +40,7 @@ describe("middleware", () => {
       },
     });
 
-    const response = await middleware(request);
+    const response = await proxy(request);
 
     expect(response.status).toBe(200);
     expect(mockedLoggerInfo).toHaveBeenCalled();
@@ -51,7 +51,7 @@ describe("middleware", () => {
     mockedVerifyAccessToken.mockRejectedValue(new Error("bad token"));
     const request = new NextRequest("http://localhost/api/health");
 
-    const response = await middleware(request);
+    const response = await proxy(request);
 
     expect(response.status).toBe(200);
     expect(mockedLoggerInfo).toHaveBeenCalled();

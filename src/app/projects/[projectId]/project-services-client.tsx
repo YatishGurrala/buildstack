@@ -896,6 +896,9 @@ export function ProjectServicesClient({
           <Link href={`/projects/${projectId}/settings`} className={styles.sidebarNavItem}>
             Settings
           </Link>
+          <Link href="/docs/connect-app" className={styles.sidebarNavItem}>
+            Documentation
+          </Link>
           <Link href={`/`} className={styles.sidebarNavItem}>All Projects</Link>
         </nav>
       </aside>
@@ -942,33 +945,35 @@ export function ProjectServicesClient({
             <p className={styles.errorBanner}>{error}</p>
           ) : (
             <>
-              <ul className={styles.serviceGrid}>
-                {services.map((service) => {
-                  const icon = isKnownServiceId(service.id) ? SERVICE_ICONS[service.id] : "::";
-                  const color = isKnownServiceId(service.id) ? SERVICE_COLORS[service.id] : "#6b7280";
-                  const isSelected = serviceId === service.id;
-                  return (
-                    <li key={service.id}>
-                      <Link
-                        href={getServiceHref(projectId, service.id)}
-                        className={`${styles.serviceCardButton} ${isSelected ? styles.serviceCardButtonActive : ""}`}
-                        style={{ "--service-color": color } as React.CSSProperties}
-                        aria-current={isSelected ? "page" : undefined}
-                      >
-                        <div className={styles.serviceCardIcon}>{icon}</div>
-                        <div className={styles.serviceCardBody}>
-                          <h2 className={styles.serviceCardName}>{service.name}</h2>
-                          <p className={styles.serviceCardDesc}>{service.description}</p>
-                        </div>
-                        <span className={service.status === "available" ? styles.statusAvailable : styles.statusSoon}>
-                          {service.status === "available" ? "LIVE" : "COMING SOON"}
-                        </span>
-                        <span className={styles.serviceCardCta}>{isSelected ? "Viewing" : "Open"}</span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
+                {!serviceId ? (
+                  <ul className={styles.serviceGrid}>
+                    {services.map((service) => {
+                      const icon = isKnownServiceId(service.id) ? SERVICE_ICONS[service.id] : "::";
+                      const color = isKnownServiceId(service.id) ? SERVICE_COLORS[service.id] : "#6b7280";
+                      const isSelected = serviceId === service.id;
+                      return (
+                        <li key={service.id}>
+                          <Link
+                            href={getServiceHref(projectId, service.id)}
+                            className={`${styles.serviceCardButton} ${isSelected ? styles.serviceCardButtonActive : ""}`}
+                            style={{ "--service-color": color } as React.CSSProperties}
+                            aria-current={isSelected ? "page" : undefined}
+                          >
+                            <div className={styles.serviceCardIcon}>{icon}</div>
+                            <div className={styles.serviceCardBody}>
+                              <h2 className={styles.serviceCardName}>{service.name}</h2>
+                              <p className={styles.serviceCardDesc}>{service.description}</p>
+                            </div>
+                            <span className={service.status === "available" ? styles.statusAvailable : styles.statusSoon}>
+                              {service.status === "available" ? "LIVE" : "COMING SOON"}
+                            </span>
+                            <span className={styles.serviceCardCta}>{isSelected ? "Viewing" : "Open"}</span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : null}
 
               {selectedService && selectedKnownServiceId ? (
                 <section className={styles.serviceConsole}>
@@ -1071,6 +1076,9 @@ export function ProjectServicesClient({
                     <p className={styles.projectCardDate}>Need integration details now? Open the API service connect panel.</p>
                     <Link href={`/projects/${projectId}/api#api-connect`} className={styles.openProjectBtn}>
                       Open connect panel
+                    </Link>
+                    <Link href="/docs/connect-app" className={styles.openProjectBtnSecondary}>
+                      Open documentation
                     </Link>
                   </div>
                 </section>
