@@ -6,6 +6,7 @@ import { provisionProjectSchema } from "@/core/db/projects";
 import { verifyAccessToken } from "@/core/auth/tokens";
 import { sha256 } from "@/lib/hash";
 import { HttpError } from "@/lib/http";
+import { env } from "@/lib/env";
 
 function extractBearerToken(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
@@ -17,6 +18,16 @@ function extractBearerToken(request: NextRequest) {
 }
 
 export async function requireUser(request: NextRequest) {
+  // TODO: remove before showcasing — SKIP_AUTH bypasses all session auth
+  if (env.SKIP_AUTH) {
+    const admin = await coreDb.user.upsert({
+      where: { googleSub: "__admin__" },
+      create: { googleSub: "__admin__", email: env.ADMIN_EMAIL ?? "admin@localhost", name: "Admin" },
+      update: {},
+    });
+    return { sub: admin.id, email: admin.email };
+  }
+
   const bearer = extractBearerToken(request);
   const cookieToken = request.cookies.get(ACCESS_COOKIE)?.value;
   const token = bearer ?? cookieToken;

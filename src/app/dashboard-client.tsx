@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Script from "next/script";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import styles from "./page.module.css";
@@ -44,25 +43,7 @@ type ApiError = {
   };
 };
 
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        id: {
-          initialize: (config: { client_id: string; callback: (response: { credential: string }) => void }) => void;
-          renderButton: (container: HTMLElement, options: Record<string, unknown>) => void;
-        };
-      };
-    };
-  }
-}
-
-const googleClientId =
-  process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ??
-  "179267377700-uuvka05i5t2g0tjte70ivg3692ko97um.apps.googleusercontent.com";
-
 export function DashboardClient() {
-  const googleButtonRef = useRef<HTMLDivElement | null>(null);
   const csrfRef = useRef<string>("");
 
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -73,6 +54,8 @@ export function DashboardClient() {
   const [statusMessage, setStatusMessage] = useState("");
   const [projectName, setProjectName] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
 
   const captureCsrf = useCallback(
     (response: Response) => {
@@ -132,7 +115,9 @@ export function DashboardClient() {
       await bootstrapCsrf();
       await loadProjects();
     } catch {
-      setIsLoggedIn(false);
+      // TODO: re-enable login gate before showcasing
+      // setIsLoggedIn(false);
+      setIsLoggedIn(true); // SKIP_AUTH mode — no login required
     } finally {
       setSessionChecked(true);
     }
@@ -142,61 +127,31 @@ export function DashboardClient() {
     void initializeSession();
   }, [initializeSession]);
 
-  const handleGoogleSignIn = useCallback(
-    async (idToken: string) => {
+  const handleEmailLogin = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
       setIsSigningIn(true);
-      setStatusMessage("Signing in…");
+      setStatusMessage("");
       try {
         if (!csrfRef.current) {
           await bootstrapCsrf();
         }
 
-        const result = await apiCall<{ user?: AppUser }>("POST", "/api/core/auth/google", {
-          idToken,
+        const result = await apiCall<{ user?: AppUser }>("POST", "/api/core/auth/login", {
+          email: loginEmail,
+          password: loginPassword,
         });
 
         setUser(result.user ?? null);
         await loadProjects();
-        setStatusMessage("");
       } catch (error) {
         setStatusMessage(error instanceof Error ? error.message : "Sign-in failed. Try again.");
       } finally {
         setIsSigningIn(false);
       }
     },
-    [apiCall, bootstrapCsrf, loadProjects],
+    [apiCall, bootstrapCsrf, loadProjects, loginEmail, loginPassword],
   );
-
-  const setupGoogleButton = useCallback(() => {
-    if (!window.google || !googleButtonRef.current) {
-      return;
-    }
-
-    window.google.accounts.id.initialize({
-      client_id: googleClientId,
-      callback: ({ credential }) => {
-        void handleGoogleSignIn(credential);
-      },
-    });
-
-    googleButtonRef.current.innerHTML = "";
-    window.google.accounts.id.renderButton(googleButtonRef.current, {
-      theme: "filled_black",
-      size: "large",
-      shape: "pill",
-      text: "signin_with",
-    });
-  }, [handleGoogleSignIn]);
-
-  useEffect(() => {
-    if (!sessionChecked || isLoggedIn) {
-      return;
-    }
-
-    if (window.google && googleButtonRef.current) {
-      setupGoogleButton();
-    }
-  }, [isLoggedIn, sessionChecked, setupGoogleButton]);
 
   const signOut = useCallback(async () => {
     try {
@@ -227,44 +182,58 @@ export function DashboardClient() {
   // ─── Not yet checked session ───────────────────────────────────────────────
   if (!sessionChecked) {
     return (
-      <>
-        <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onLoad={setupGoogleButton} />
-        <div className={styles.loadingScreen}>
-          <p>Loading…</p>
-        </div>
-      </>
+      <div className={styles.loadingScreen}>
+        <p>Loading…</p>
+      </div>
     );
   }
 
-  // ─── Sign-in page ──────────────────────────────────────────────────────────
-  if (!isLoggedIn) {
+  // ─── Sign-in page — TODO: re-enable before showcasing ─────────────────────
+  // if (!isLoggedIn) { ... email/password form ... }
+  if (false) {
     return (
-      <>
-        <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onLoad={setupGoogleButton} />
-        <div className={styles.signInPage}>
-          <div className={styles.signInCard}>
-            <div className={styles.signInLogo}>
-              <span className={styles.logoMark}>B</span>
-              <span className={styles.logoText}>Buildstack</span>
-            </div>
+      <div className={styles.signInPage}>
+        <div className={styles.signInCard}>
+          <div className={styles.signInLogo}>
+            <span className={styles.logoMark}>B</span>
+            <span className={styles.logoText}>Buildstack</span>
+          </div>
             <h1 className={styles.signInTitle}>Welcome back</h1>
             <p className={styles.signInSub}>
               Sign in to manage your backend projects — auth, database, APIs and more, all in one place.
             </p>
             {statusMessage ? <p className={styles.signInError}>{statusMessage}</p> : null}
-            <div ref={googleButtonRef} className={styles.googleSlot} aria-label="Google sign-in button" />
-            {isSigningIn ? <p className={styles.signInHint}>Signing you in…</p> : null}
+            <form onSubmit={(e) => { void handleEmailLogin(e); }} className={styles.loginForm}>
+              <input
+                className={styles.loginInput}
+                type="email"
+                placeholder="Email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                autoComplete="email"
+                required
+              />
+              <input
+                className={styles.loginInput}
+                type="password"
+                placeholder="Password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
+              <button type="submit" className={styles.loginButton} disabled={isSigningIn}>
+                {isSigningIn ? "Signing in…" : "Sign in"}
+              </button>
+            </form>
           </div>
         </div>
-      </>
     );
   }
 
   // ─── Dashboard ─────────────────────────────────────────────────────────────
   return (
-    <>
-      <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onLoad={setupGoogleButton} />
-      <div className={styles.appShell}>
+    <div className={styles.appShell}>
 
         {/* Top bar */}
         <header className={styles.topBar}>
@@ -365,7 +334,6 @@ export function DashboardClient() {
           )}
         </main>
       </div>
-    </>
   );
 }
 
