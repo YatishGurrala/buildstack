@@ -9,7 +9,7 @@ const EnvSchema = z.object({
   // Google OAuth — TODO: configure for production when needed
   GOOGLE_CLIENT_ID: z.string().optional(),
   // Internal admin credentials (used instead of Google OAuth for now)
-  ADMIN_EMAIL: z.string().email().optional(),
+  ADMIN_EMAIL: z.string().min(1).optional(),
   ADMIN_PASSWORD: z.string().min(8).optional(),
   // TODO: remove before showcasing — bypasses all auth when true
   SKIP_AUTH: z

@@ -137,6 +137,7 @@ export function ProjectServicesClient({
   const [apiKeyName, setApiKeyName] = useState("");
   const [apiKeySecret, setApiKeySecret] = useState("");
   const [apiBusy, setApiBusy] = useState(false);
+  const [copiedSnippet, setCopiedSnippet] = useState("");
   const [analytics, setAnalytics] = useState<AnalyticsSnapshot | null>(null);
   const [serviceDetails, setServiceDetails] = useState<ServiceDetails | null>(null);
 
@@ -347,7 +348,44 @@ export function ProjectServicesClient({
   const selectedKnownServiceId = selectedService && isKnownServiceId(selectedService.id) ? selectedService.id : null;
   const authBasePath = project ? `/api/v1/${project.key}/auth` : "";
   const recordsBasePath = project ? `/api/v1/${project.key}/records` : "";
+  const projectApiKey = apiKeySecret || "<your-api-key>";
+  const publicBaseUrl = typeof window === "undefined" ? "https://stack.builddeck.io" : window.location.origin;
+  const registerSnippet = `await fetch("${publicBaseUrl}${authBasePath}/register", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "x-api-key": "${projectApiKey}",
+  },
+  body: JSON.stringify({
+    email: "user@example.com",
+    password: "strong-password",
+  }),
+});`;
+  const recordsSnippet = `await fetch("${publicBaseUrl}${recordsBasePath}", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "x-api-key": "${projectApiKey}",
+  },
+  body: JSON.stringify({
+    collection: "todos",
+    ownerId: "user-id",
+    data: { title: "Ship Buildstack", done: false },
+  }),
+});`;
   const topRoutes = analytics?.routes.slice().sort((a, b) => b.count - a.count).slice(0, 5) ?? [];
+
+  const copySnippet = async (label: string, content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedSnippet(label);
+      setTimeout(() => {
+        setCopiedSnippet("");
+      }, 1400);
+    } catch {
+      setError("Could not copy snippet. Please copy manually.");
+    }
+  };
 
   const renderServiceOptions = () => {
     if (!selectedKnownServiceId || !project) {
@@ -395,6 +433,10 @@ export function ProjectServicesClient({
     if (selectedKnownServiceId === "api") {
       return (
         <div className={styles.serviceOptionGrid}>
+          <Link href={`#api-connect`} className={styles.serviceOptionCard}>
+            <span className={styles.serviceOptionTitle}>Connect frontend app</span>
+            <span className={styles.serviceOptionText}>Copy ready-to-use snippets with your project key and API key header.</span>
+          </Link>
           <Link href={`#api-endpoints`} className={styles.serviceOptionCard}>
             <span className={styles.serviceOptionTitle}>Inspect live endpoints</span>
             <span className={styles.serviceOptionText}>See the exact auth and records routes for this project key.</span>
@@ -635,6 +677,52 @@ export function ProjectServicesClient({
               <code className={styles.endpointItem}>DELETE {recordsBasePath}/:recordId</code>
             </div>
           </div>
+
+          <div id="api-connect" className={styles.serviceSection}>
+            <h3 className={styles.serviceSectionTitle}>Connect your frontend</h3>
+            <div className={styles.serviceMetaGrid}>
+              <div className={styles.serviceMetaCard}>
+                <p className={styles.serviceMetaLabel}>Base URL</p>
+                <p className={styles.serviceMetaValue}>{publicBaseUrl}</p>
+              </div>
+              <div className={styles.serviceMetaCard}>
+                <p className={styles.serviceMetaLabel}>Project key</p>
+                <p className={styles.serviceMetaValue}>{project.key}</p>
+              </div>
+              <div className={styles.serviceMetaCard}>
+                <p className={styles.serviceMetaLabel}>API key</p>
+                <p className={styles.serviceMetaValue}>{apiKeySecret ? "Using latest generated key" : "Generate one below"}</p>
+              </div>
+            </div>
+
+            <div className={styles.connectSnippetBlock}>
+              <div className={styles.connectSnippetHeader}>
+                <p className={styles.createFormTitle}>Register user snippet</p>
+                <button
+                  type="button"
+                  className={styles.serviceActionButton}
+                  onClick={() => void copySnippet("register", registerSnippet)}
+                >
+                  {copiedSnippet === "register" ? "Copied" : "Copy"}
+                </button>
+              </div>
+              <pre className={styles.connectSnippetCode}>{registerSnippet}</pre>
+            </div>
+
+            <div className={styles.connectSnippetBlock}>
+              <div className={styles.connectSnippetHeader}>
+                <p className={styles.createFormTitle}>Create record snippet</p>
+                <button
+                  type="button"
+                  className={styles.serviceActionButton}
+                  onClick={() => void copySnippet("records", recordsSnippet)}
+                >
+                  {copiedSnippet === "records" ? "Copied" : "Copy"}
+                </button>
+              </div>
+              <pre className={styles.connectSnippetCode}>{recordsSnippet}</pre>
+            </div>
+          </div>
         </>
       );
     }
@@ -845,6 +933,13 @@ export function ProjectServicesClient({
                   <h2>Open a service</h2>
                   <p>Select any service card to open its dedicated page and inspect what is running, how it is configured, and which options are available for this project.</p>
                 </header>
+                <div className={styles.serviceSection}>
+                  <h3 className={styles.serviceSectionTitle}>Quick connect</h3>
+                  <p className={styles.projectCardDate}>Need integration details right away? Open the API service connect panel.</p>
+                  <Link href={`/projects/${projectId}/api#api-connect`} className={styles.openProjectBtn}>
+                    Open connect panel →
+                  </Link>
+                </div>
               </section>
             ) : null}
           </>

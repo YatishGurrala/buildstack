@@ -43,6 +43,20 @@ type ApiError = {
   };
 };
 
+type ApiKeyCreateResult = {
+  data: {
+    apiKey: {
+      id: string;
+      name: string;
+      keyPrefix: string;
+      createdAt: string;
+      lastUsedAt: string | null;
+      revokedAt: string | null;
+    };
+    secret: string;
+  };
+};
+
 export function DashboardClient() {
   const csrfRef = useRef<string>("");
 
@@ -54,6 +68,7 @@ export function DashboardClient() {
   const [statusMessage, setStatusMessage] = useState("");
   const [projectName, setProjectName] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newProjectApiKeySecret, setNewProjectApiKeySecret] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
@@ -153,27 +168,32 @@ export function DashboardClient() {
     [apiCall, bootstrapCsrf, loadProjects, loginEmail, loginPassword],
   );
 
-  const signOut = useCallback(async () => {
-    try {
-      await apiCall("POST", "/api/core/auth/logout");
-      setUser(null);
-      setIsLoggedIn(false);
-      setProjects([]);
-    } catch {
-      // ignore
-    }
-  }, [apiCall]);
-
   const createProject = useCallback(async () => {
     if (!projectName.trim()) return;
 
     try {
+      setNewProjectApiKeySecret("");
       const created = await apiCall<{ data: ProjectSummary }>("POST", "/api/core/projects", {
         displayName: projectName.trim(),
       });
+
+      let defaultSecret = "";
+      try {
+        const defaultKey = await apiCall<ApiKeyCreateResult>(
+          "POST",
+          `/api/core/projects/${created.data.id}/api-keys`,
+          { name: "Default client key" },
+        );
+        defaultSecret = defaultKey.data.secret;
+      } catch {
+        // Project creation should succeed even if default key creation fails.
+      }
+
       setProjects((previous) => [created.data, ...previous]);
       setProjectName("");
       setShowCreateForm(false);
+      setNewProjectApiKeySecret(defaultSecret);
+      setStatusMessage(defaultSecret ? "Project created. Copy your default API key now." : "Project created.");
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Could not create project.");
     }
@@ -243,9 +263,6 @@ export function DashboardClient() {
           </div>
           <div className={styles.topBarRight}>
             <span className={styles.topBarEmail}>{user?.email}</span>
-            <button type="button" onClick={signOut} className={styles.signOutBtn}>
-              Sign out
-            </button>
           </div>
         </header>
 
@@ -267,6 +284,13 @@ export function DashboardClient() {
 
           {/* Error message */}
           {statusMessage ? <p className={styles.errorBanner}>{statusMessage}</p> : null}
+
+          {newProjectApiKeySecret ? (
+            <div className={styles.apiKeyReveal}>
+              <p className={styles.projectCardDate}>Default API key for your new project (shown once):</p>
+              <code className={styles.apiKeyValue}>{newProjectApiKeySecret}</code>
+            </div>
+          ) : null}
 
           {/* Create form */}
           {showCreateForm ? (
@@ -327,6 +351,9 @@ export function DashboardClient() {
                   <p className={styles.projectCardDate}>Storage {formatStorage(project.usage.storageBytes)}</p>
                   <Link href={`/projects/${project.id}`} className={styles.openProjectBtn}>
                     Open project →
+                  </Link>
+                  <Link href={`/projects/${project.id}/api#api-connect`} className={styles.openProjectBtn}>
+                    Connect app →
                   </Link>
                 </li>
               ))}

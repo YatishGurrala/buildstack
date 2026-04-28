@@ -811,6 +811,32 @@
   padding: 14px;
 }
 
+.connectSnippetBlock {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.18);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.connectSnippetHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.connectSnippetCode {
+  margin: 0;
+  overflow-x: auto;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  font-family: "Geist Mono", "Fira Code", monospace;
+  line-height: 1.45;
+}
+
 /* ─── Responsive ─────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
   .dashMain {
