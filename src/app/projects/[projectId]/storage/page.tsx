@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import styles from "../../../page.module.css";
-import { ProjectOverviewCards } from "../project-overview-cards";
 
 export default async function ProjectStoragePage({
   params,
@@ -44,8 +43,6 @@ export default async function ProjectStoragePage({
               <p className={styles.dashSub}>Browse buckets, inspect files, and manage uploads.</p>
             </div>
           </div>
-
-          <ProjectOverviewCards projectId={projectId} />
 
           <div className={styles.storageLayout}>
             <section className={styles.serviceConsole}>
