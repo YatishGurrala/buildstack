@@ -1,97 +1,230 @@
-.page {
+/* ── Design-system tokens (mirrors page.module.css :root) ───────────────── */
+:root {
+  --bg: #101419;
+  --surface: #1c2025;
+  --surface-2: #232933;
+  --border: rgba(139, 144, 160, 0.28);
+  --border-strong: rgba(139, 144, 160, 0.45);
+  --primary: #0070f3;
+  --primary-soft: rgba(0, 112, 243, 0.16);
+  --text: #e0e2ea;
+  --text-muted: #c1c6d7;
+  --text-dim: #8b90a0;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
+/* ── Shell ──────────────────────────────────────────────────────────────── */
+.shell {
   min-height: 100vh;
-  background: linear-gradient(160deg, #f6f8ff 0%, #ffffff 45%, #eef3ff 100%);
-  color: #0f172a;
-  padding: 40px 20px 64px;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  background:
+    radial-gradient(circle at top right, rgba(0, 112, 243, 0.10), transparent 35%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.015) 0px, rgba(255, 255, 255, 0.015) 1px, transparent 1px, transparent 26px),
+    var(--bg);
+  color: var(--text);
+  font-family: var(--font-geist-sans), Inter, sans-serif;
 }
 
-.container {
-  max-width: 980px;
-  margin: 0 auto;
+/* ── Sidebar ────────────────────────────────────────────────────────────── */
+.sidebar {
+  border-right: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(8, 16, 34, 0.98), rgba(6, 13, 24, 0.96));
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
 }
 
-.backLink {
-  display: inline-block;
-  margin-bottom: 16px;
-  color: #1d4ed8;
+.sidebarBrand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+}
+
+.logoMark {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0085ff, #0062d6);
+  display: grid;
+  place-items: center;
+  color: #f3f8ff;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.logoText {
+  margin: 0;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.navItem {
+  color: var(--text-muted);
   text-decoration: none;
-  font-weight: 600;
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-size: 0.88rem;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
-.backLink:hover {
-  text-decoration: underline;
+.navItem:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.navItemActive {
+  background: linear-gradient(90deg, rgba(0, 112, 243, 0.22), rgba(0, 112, 243, 0.05));
+  border-color: rgba(0, 112, 243, 0.55);
+  color: #cfe4ff;
+}
+
+.sidebarFooter {
+  margin-top: auto;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  padding: 10px 8px 2px;
+}
+
+/* ── Main content ───────────────────────────────────────────────────────── */
+.main {
+  padding: 40px 48px 64px;
+  min-width: 0;
+}
+
+.header {
+  margin-bottom: 32px;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 10px;
 }
 
 .title {
-  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-family: Manrope, var(--font-geist-sans), sans-serif;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
   line-height: 1.2;
   margin: 0;
+  color: var(--text);
 }
 
 .subtitle {
   margin: 12px 0 0;
-  color: #334155;
-  max-width: 760px;
+  color: var(--text-muted);
+  max-width: 680px;
+  line-height: 1.6;
 }
 
+/* ── Section cards ──────────────────────────────────────────────────────── */
 .section {
-  margin-top: 28px;
-  background: #ffffff;
-  border: 1px solid #dbe5ff;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  margin-top: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px 24px;
+  transition: border-color 0.2s;
+}
+
+.section:hover {
+  border-color: var(--border-strong);
 }
 
 .section h2 {
-  margin: 0 0 10px;
-  font-size: 1.2rem;
+  font-family: Manrope, var(--font-geist-sans), sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 12px;
 }
 
-.section p,
+.section p {
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 8px 0 0;
+}
+
 .section li {
-  color: #1e293b;
+  color: var(--text-muted);
+  line-height: 1.7;
 }
 
 .section ul,
 .section ol {
-  margin: 0;
+  margin: 8px 0 0;
   padding-left: 22px;
 }
 
+/* ── Code blocks ────────────────────────────────────────────────────────── */
 .code {
-  margin-top: 10px;
+  margin-top: 12px;
   overflow-x: auto;
-  background: #0b1220;
-  color: #e2e8f0;
-  border-radius: 12px;
-  border: 1px solid #1e293b;
-  padding: 14px;
-  font-size: 0.86rem;
+  background: #0b0e12;
+  color: #aec6ff;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  padding: 16px;
+  font-family: "Geist Mono", "Fira Code", monospace;
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+/* ── Inline code chips ──────────────────────────────────────────────────── */
+.inline {
+  background: rgba(0, 112, 243, 0.12);
+  border: 1px solid rgba(0, 112, 243, 0.28);
+  border-radius: 6px;
+  padding: 1px 6px;
+  color: #aec6ff;
+  font-family: "Geist Mono", "Fira Code", monospace;
+  font-size: 0.88em;
+}
+
+/* ── Note / callout ─────────────────────────────────────────────────────── */
+.note {
+  margin-top: 12px;
+  border-left: 3px solid var(--primary);
+  background: var(--primary-soft);
+  padding: 10px 14px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: #cfe4ff;
+  font-size: 0.9rem;
   line-height: 1.5;
 }
 
-.inline {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  border-radius: 6px;
-  padding: 0 6px;
-}
-
-.note {
-  margin-top: 10px;
-  border-left: 4px solid #2563eb;
-  background: #eff6ff;
-  padding: 10px 12px;
-  border-radius: 8px;
-}
-
-@media (max-width: 640px) {
-  .page {
-    padding-top: 28px;
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .shell {
+    grid-template-columns: 1fr;
   }
 
-  .section {
-    padding: 16px;
+  .sidebar {
+    display: none;
+  }
+
+  .main {
+    padding: 24px 20px 48px;
   }
 }

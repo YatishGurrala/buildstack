@@ -87,16 +87,33 @@ await api("/auth/logout", {
 
 export default function ConnectAppDocsPage() {
   return (
-    <div className={styles.page}>
-      <div className={styles.container}>
-        <Link className={styles.backLink} href="/">
-          ← Back to Dashboard
-        </Link>
+    <div className={styles.shell}>
+      {/* Sidebar */}
+      <aside className={styles.sidebar}>
+        <div className={styles.sidebarBrand}>
+          <div className={styles.logoMark}>B</div>
+          <p className={styles.logoText}>Buildstack</p>
+        </div>
 
-        <h1 className={styles.title}>Connect Another App To Your Backend</h1>
-        <p className={styles.subtitle}>
-          Use this guide to connect web, mobile, or server apps to your Buildstack backend using project keys and API keys.
-        </p>
+        <nav className={styles.sidebarNav}>
+          <Link href="/" className={styles.navItem}>Dashboard</Link>
+          <Link href="/docs/connect-app" className={`${styles.navItem} ${styles.navItemActive}`}>
+            Documentation
+          </Link>
+        </nav>
+
+        <div className={styles.sidebarFooter}>stack.builddeck.io</div>
+      </aside>
+
+      {/* Main */}
+      <main className={styles.main}>
+        <div className={styles.header}>
+          <p className={styles.eyebrow}>Developer Guide</p>
+          <h1 className={styles.title}>Connect Another App To Your Backend</h1>
+          <p className={styles.subtitle}>
+            Use this guide to connect web, mobile, or server apps to your Buildstack backend using project keys and API keys.
+          </p>
+        </div>
 
         <section className={styles.section}>
           <h2>1. What you need first</h2>
@@ -155,7 +172,8 @@ export default function ConnectAppDocsPage() {
             <li>Rotate keys if leaked.</li>
           </ul>
         </section>
-      </div>
+      </main>
     </div>
   );
 }
+
