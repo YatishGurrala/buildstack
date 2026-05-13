@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { use } from "react";
 
 import styles from "./page.module.css";
 
@@ -85,7 +86,14 @@ await api("/auth/logout", {
   headers: { "x-user-token": userToken },
 });`;
 
-export default function ConnectAppDocsPage() {
+export default function ConnectAppDocsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ projectId?: string }>;
+}) {
+  const { projectId } = use(searchParams);
+  const dashboardHref = projectId ? `/projects/${projectId}` : "/";
+
   return (
     <div className={styles.shell}>
       {/* Sidebar */}
@@ -96,7 +104,7 @@ export default function ConnectAppDocsPage() {
         </div>
 
         <nav className={styles.sidebarNav}>
-          <Link href="/" className={styles.navItem}>Dashboard</Link>
+          <Link href={dashboardHref} className={styles.navItem}>Dashboard</Link>
           <Link href="/docs/connect-app" className={`${styles.navItem} ${styles.navItemActive}`}>
             Documentation
           </Link>

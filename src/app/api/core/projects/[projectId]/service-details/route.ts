@@ -7,7 +7,7 @@ import { coreProjectsService } from "@/modules/core-projects/projects.service";
 
 export const runtime = "nodejs";
 
-const ALLOWED_SERVICES = new Set(["auth", "database", "api"]);
+const ALLOWED_SERVICES = new Set(["auth", "database", "api", "logs", "usage"]);
 
 export async function OPTIONS(request: NextRequest) {
   const response = new NextResponse(null, { status: 204 });
@@ -31,7 +31,7 @@ export async function GET(
     const details = await coreProjectsService.getServiceDetailsForUserProject(
       user.sub,
       projectId,
-      service as "auth" | "database" | "api",
+      service as "auth" | "database" | "api" | "logs" | "usage",
     );
 
     if (!details) {

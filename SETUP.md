@@ -139,6 +139,13 @@ http://localhost:3000/test-client.html
 
 No additional setup required — the test client connects to your local backend!
 
+## App Screens
+
+- The home page is the global project list.
+- Project pages focus on a single backend workspace and keep the visible details narrow so the important actions stay easy to scan.
+- The API panel is the main place to create keys and get connection snippets.
+- Settings, storage, SQL, and analytics are separate pages so each task stays focused.
+
 ## API Endpoints
 
 ### Core Auth Endpoints

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireProjectApiKey } from "@/core/auth/guard";
+import { assertApiKeyScope } from "@/core/rbac/rbac";
 import { applyCors } from "@/lib/cors";
-import { handleApiError, jsonResponse } from "@/lib/http";
+import { handleApiError, jsonResponse, validateCsrfToken } from "@/lib/http";
 import { HttpError } from "@/lib/http";
 import { projectAuthService } from "@/modules/project-auth/auth.service";
 
@@ -19,8 +20,10 @@ export async function POST(
   context: { params: Promise<{ projectKey: string }> },
 ) {
   try {
+    validateCsrfToken(request, "token");
     const { projectKey } = await context.params;
     const access = await requireProjectApiKey(request, projectKey);
+    assertApiKeyScope(access.scopes, "auth:write");
 
     // The user's session token comes in via Authorization: Bearer <token>
     const authHeader = request.headers.get("x-user-token") ?? request.headers.get("authorization") ?? "";

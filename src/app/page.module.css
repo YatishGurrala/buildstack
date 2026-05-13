@@ -322,12 +322,16 @@
 
 .openProjectBtn,
 .openProjectBtnSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-decoration: none;
   border-radius: 9px;
   font-size: 0.8rem;
   font-weight: 600;
   text-align: center;
   padding: 8px 10px;
+  margin-top: 8px;
 }
 
 .openProjectBtn {
@@ -533,14 +537,14 @@
 .serviceCardButton {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   text-decoration: none;
   color: inherit;
   border: 1px solid var(--border);
-  border-top: 2px solid var(--service-color, var(--primary));
+  border-top: 1px solid var(--service-color, var(--primary));
   border-radius: var(--radius-md);
-  background: linear-gradient(180deg, rgba(31, 38, 49, 0.96), rgba(22, 27, 35, 0.96));
-  padding: 12px;
+  background: rgba(22, 27, 35, 0.88);
+  padding: 11px;
 }
 
 .serviceCardButtonActive {
@@ -554,13 +558,7 @@
 
 .serviceCardName {
   margin: 0;
-  font-size: 1.05rem;
-}
-
-.serviceCardDesc {
-  margin: 4px 0 0;
-  color: var(--text-muted);
-  font-size: 0.82rem;
+  font-size: 0.98rem;
 }
 
 .statusAvailable,
@@ -584,16 +582,16 @@
 
 .serviceCardCta {
   margin-top: 2px;
-  color: #9cc6ff;
-  font-size: 0.78rem;
+  color: #b6cae6;
+  font-size: 0.74rem;
 }
 
 .serviceConsole {
   margin-top: 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, rgba(34, 40, 51, 0.96), rgba(20, 26, 34, 0.98));
-  padding: 16px;
+  background: rgba(20, 26, 34, 0.9);
+  padding: 14px;
 }
 
 .serviceConsoleHeader h2 {
@@ -604,21 +602,21 @@
 .serviceConsoleHeader p {
   margin: 5px 0 0;
   color: var(--text-muted);
-  font-size: 0.86rem;
+  font-size: 0.82rem;
 }
 
 .serviceMetaGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
   margin-top: 12px;
 }
 
 .serviceMetaCard {
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 11px;
-  background: rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.14);
 }
 
 .serviceMetaLabel {
@@ -637,7 +635,45 @@
 }
 
 .serviceSection {
-  margin-top: 14px;
+  margin-top: 12px;
+}
+
+.serviceDetailSplit {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.serviceDetailNav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.serviceDetailNavButton {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-muted);
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.serviceDetailNavButtonActive {
+  border-color: rgba(0, 112, 243, 0.5);
+  background: rgba(0, 112, 243, 0.14);
+  color: #d8e8ff;
+}
+
+.serviceDetailPanel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 12px;
+  min-width: 0;
 }
 
 .serviceSectionTitle {
@@ -716,6 +752,14 @@
   border-radius: 10px;
   padding: 11px;
   background: rgba(0, 0, 0, 0.22);
+}
+
+button.apiKeyItem {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  appearance: none;
 }
 
 .analyticsRouteStats {

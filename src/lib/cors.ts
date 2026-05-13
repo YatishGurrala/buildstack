@@ -13,6 +13,6 @@ export function applyCors(request: NextRequest, response: NextResponse) {
   response.headers.set("Access-Control-Allow-Methods", "GET,POST,PATCH,OPTIONS");
   response.headers.set(
     "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, X-Requested-With",
+    "Content-Type, Authorization, X-Requested-With, x-csrf-token",
   );
 }

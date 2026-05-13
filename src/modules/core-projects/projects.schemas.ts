@@ -11,7 +11,8 @@ export type ProjectSummary = {
   key: string;
   schemaName: string;
   displayName: string;
-  role: "owner" | "admin" | "member";
+  organizationId?: string | null;
+  role: "owner" | "admin" | "member" | "viewer";
   createdAt: string;
   usage: {
     storageBytes: number;
@@ -19,6 +20,8 @@ export type ProjectSummary = {
 };
 
 export type ProjectService = {
+  // id is an open string to allow separate products to define their own service
+  // entries without modifying this core type.
   id: string;
   name: string;
   description: string;
@@ -54,5 +57,18 @@ export type ProjectServiceDetails =
       service: "api";
       api: {
         activeApiKeys: number;
+      };
+    }
+  | {
+      service: "logs";
+      logs: {
+        recentCount: number;
+      };
+    }
+  | {
+      service: "usage";
+      usage: {
+        totalEvents: number;
+        totalQuantity: number;
       };
     };

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const nextJest = require('next/jest')
 
 const createJestConfig = nextJest({
@@ -13,6 +14,9 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(jose|@panva)/)',
+  ],
   collectCoverageFrom: [
     'src/lib/**/*.ts',
     'src/core/auth/**/*.ts',

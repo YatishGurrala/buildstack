@@ -11,11 +11,16 @@ const EnvSchema = z.object({
   // Internal admin credentials (used instead of Google OAuth for now)
   ADMIN_EMAIL: z.string().min(1).optional(),
   ADMIN_PASSWORD: z.string().min(8).optional(),
-  // TODO: remove before showcasing — bypasses all auth when true
+  // SECURITY: SKIP_AUTH should only be enabled in development
+  // Production deployments must have SKIP_AUTH=false or not set at all
   SKIP_AUTH: z
     .string()
     .optional()
-    .transform((v) => v === "true"),
+    .transform((v) => v === "true")
+    .refine(
+      (skipAuth) => process.env.NODE_ENV !== "production" || !skipAuth,
+      "SKIP_AUTH cannot be enabled in production",
+    ),
   JWT_SECRET: z.string().min(24, "JWT_SECRET must be at least 24 chars"),
   ACCESS_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(15),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),

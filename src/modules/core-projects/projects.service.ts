@@ -6,6 +6,8 @@ import {
   provisionProjectSchema,
   toProjectSchemaName,
 } from "@/core/db/projects";
+import { auditLogService } from "@/modules/audit-log/audit-log.service";
+import { usageLogService } from "@/modules/usage-log/usage-log.service";
 
 import type { ProjectService, ProjectServiceDetails, ProjectSummary } from "./projects.schemas";
 
@@ -31,20 +33,60 @@ async function ensureUniqueKey(base: string) {
 }
 
 function mapProject(item: {
-  role: "owner" | "admin" | "member";
-  project: { id: string; key: string; schemaName: string; displayName: string; createdAt: Date };
+  role: "owner" | "admin" | "member" | "viewer";
+  project: {
+    id: string;
+    key: string;
+    schemaName: string;
+    displayName: string;
+    organizationId?: string | null;
+    createdAt: Date;
+  };
 }, storageBytes: number): ProjectSummary {
   return {
     id: item.project.id,
     key: item.project.key,
     schemaName: item.project.schemaName,
     displayName: item.project.displayName,
+    organizationId: item.project.organizationId ?? null,
     role: item.role,
     createdAt: item.project.createdAt.toISOString(),
     usage: {
       storageBytes,
     },
   };
+}
+
+async function requireProjectMembership(userId: string, projectId: string) {
+  // 1. Direct project membership — fast path (existing behavior).
+  const directMembership = await coreDb.projectMembership.findFirst({
+    where: { userId, projectId },
+    include: { project: true },
+  });
+
+  if (directMembership) {
+    return { role: directMembership.role, project: directMembership.project };
+  }
+
+  // 2. Org membership fallback: if the project belongs to an org and the user
+  //    is a member of that org, grant access under their org role.
+  const projectWithOrg = await coreDb.project.findFirst({
+    where: { id: projectId, organizationId: { not: null } },
+    include: {
+      organization: {
+        include: {
+          members: { where: { userId }, take: 1 },
+        },
+      },
+    },
+  });
+
+  const orgMember = projectWithOrg?.organization?.members[0];
+  if (!orgMember || !projectWithOrg) {
+    return null;
+  }
+
+  return { role: orgMember.role, project: projectWithOrg };
 }
 
 export const coreProjectsService = {
@@ -105,15 +147,7 @@ export const coreProjectsService = {
   },
 
   async getServicesForUserProject(userId: string, projectId: string): Promise<ProjectService[]> {
-    const membership = await coreDb.projectMembership.findFirst({
-      where: {
-        userId,
-        projectId,
-      },
-      include: {
-        project: true,
-      },
-    });
+    const membership = await requireProjectMembership(userId, projectId);
 
     if (!membership) {
       return [];
@@ -145,6 +179,18 @@ export const coreProjectsService = {
         status: "available",
       },
       {
+        id: "logs",
+        name: "Logs",
+        description: "Recent audit events for keys, auth, and project access.",
+        status: "available",
+      },
+      {
+        id: "usage",
+        name: "Usage",
+        description: "Per-project usage metrics for records and auth operations.",
+        status: "available",
+      },
+      {
         id: "storage",
         name: "Storage",
         description: "Planned managed file storage for project assets.",
@@ -158,17 +204,9 @@ export const coreProjectsService = {
   async getServiceDetailsForUserProject(
     userId: string,
     projectId: string,
-    service: "auth" | "database" | "api",
+    service: "auth" | "database" | "api" | "logs" | "usage",
   ): Promise<ProjectServiceDetails | null> {
-    const membership = await coreDb.projectMembership.findFirst({
-      where: {
-        userId,
-        projectId,
-      },
-      include: {
-        project: true,
-      },
-    });
+    const membership = await requireProjectMembership(userId, projectId);
 
     if (!membership) {
       return null;
@@ -184,6 +222,27 @@ export const coreProjectsService = {
       return { service, database };
     }
 
+    if (service === "logs") {
+      const recentLogs = await auditLogService.listForProject(projectId, { limit: 20 });
+      return {
+        service,
+        logs: {
+          recentCount: recentLogs.length,
+        },
+      };
+    }
+
+    if (service === "usage") {
+      const usage = await usageLogService.summarizeForProject(projectId);
+      return {
+        service,
+        usage: {
+          totalEvents: usage.totalEvents,
+          totalQuantity: usage.totalQuantity,
+        },
+      };
+    }
+
     const activeApiKeys = await coreDb.apiKey.count({
       where: {
         projectId,
@@ -196,6 +255,32 @@ export const coreProjectsService = {
       api: {
         activeApiKeys,
       },
+    };
+  },
+
+  async getAuditLogsForUserProject(userId: string, projectId: string, limit?: number) {
+    const membership = await requireProjectMembership(userId, projectId);
+    if (!membership) {
+      return null;
+    }
+
+    return auditLogService.listForProject(projectId, { limit });
+  },
+
+  async getUsageForUserProject(userId: string, projectId: string, limit?: number) {
+    const membership = await requireProjectMembership(userId, projectId);
+    if (!membership) {
+      return null;
+    }
+
+    const [items, summary] = await Promise.all([
+      usageLogService.listForProject(projectId, { limit }),
+      usageLogService.summarizeForProject(projectId),
+    ]);
+
+    return {
+      items,
+      summary,
     };
   },
 };

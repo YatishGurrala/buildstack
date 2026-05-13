@@ -1,5 +1,5 @@
 import { coreDb } from "@/core/db/core";
-import { getProjectStorageUsage, provisionProjectSchema, toProjectSchemaName } from "@/core/db/projects";
+import { getProjectStorageUsage, provisionProjectSchema, toProjectSchemaName, getProjectAuthSummary, getProjectDatabaseSummary } from "@/core/db/projects";
 import { coreProjectsService } from "./projects.service";
 
 jest.mock("@/core/db/core", () => ({
@@ -7,6 +7,7 @@ jest.mock("@/core/db/core", () => ({
     $transaction: jest.fn(),
     project: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       create: jest.fn(),
       delete: jest.fn(),
     },
@@ -15,6 +16,9 @@ jest.mock("@/core/db/core", () => ({
       create: jest.fn(),
       findFirst: jest.fn(),
     },
+    apiKey: {
+      count: jest.fn(),
+    },
   },
 }));
 
@@ -22,12 +26,15 @@ jest.mock("@/core/db/projects", () => ({
   getProjectStorageUsage: jest.fn(),
   provisionProjectSchema: jest.fn(),
   toProjectSchemaName: jest.fn((key: string) => `proj_${key.replace(/-/g, "_")}`),
+  getProjectAuthSummary: jest.fn(),
+  getProjectDatabaseSummary: jest.fn(),
 }));
 
-const mockedDb = coreDb as {
+const mockedDb = coreDb as unknown as {
   $transaction: jest.Mock;
   project: {
     findUnique: jest.Mock;
+    findFirst: jest.Mock;
     create: jest.Mock;
     delete: jest.Mock;
   };
@@ -35,6 +42,9 @@ const mockedDb = coreDb as {
     findMany: jest.Mock;
     create: jest.Mock;
     findFirst: jest.Mock;
+  };
+  apiKey: {
+    count: jest.Mock;
   };
 };
 
@@ -221,6 +231,212 @@ describe("coreProjectsService", () => {
 
       const services = await coreProjectsService.getServicesForUserProject("u1", "p-other");
       expect(services).toEqual([]);
+    });
+
+    it("returns services for multiple member roles", async () => {
+      mockedDb.projectMembership.findFirst.mockResolvedValue({
+        userId: "u2",
+        projectId: "p1",
+        role: "editor",
+        project: {
+          id: "p1",
+          key: "editor-proj",
+          schemaName: "proj_editor",
+          displayName: "Editor Project",
+          createdAt: new Date(),
+        },
+      });
+
+      const services = await coreProjectsService.getServicesForUserProject("u2", "p1");
+      expect(services.length).toBeGreaterThan(0);
+    });
+
+    it("returns services for viewer role", async () => {
+      mockedDb.projectMembership.findFirst.mockResolvedValue({
+        userId: "u3",
+        projectId: "p1",
+        role: "viewer",
+        project: {
+          id: "p1",
+          key: "viewer-proj",
+          schemaName: "proj_viewer",
+          displayName: "Viewer Project",
+          createdAt: new Date(),
+        },
+      });
+
+      const services = await coreProjectsService.getServicesForUserProject("u3", "p1");
+      expect(services.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("additional coverage tests", () => {
+    it("handles projects with multiple memberships for different users", async () => {
+      mockedDb.projectMembership.findMany.mockResolvedValue([
+        {
+          role: "owner",
+          createdAt: new Date("2024-01-01"),
+          project: {
+            id: "p1",
+            key: "team-project",
+            schemaName: "proj_team",
+            displayName: "Team Project",
+            createdAt: new Date("2024-01-01"),
+          },
+        },
+        {
+          role: "owner",
+          createdAt: new Date("2024-02-01"),
+          project: {
+            id: "p2",
+            key: "personal-project",
+            schemaName: "proj_personal",
+            displayName: "Personal Project",
+            createdAt: new Date("2024-02-01"),
+          },
+        },
+      ]);
+      (getProjectStorageUsage as jest.Mock).mockResolvedValue(8192);
+
+      const result = await coreProjectsService.listForUser("u1");
+
+      expect(result).toHaveLength(2);
+      expect(result[0].key).toBe("team-project");
+      expect(result[1].key).toBe("personal-project");
+    });
+
+    it("processes large project names correctly", async () => {
+      mockedDb.project.findUnique.mockResolvedValue(null);
+      mockedDb.$transaction.mockImplementation(async (callback: (tx: typeof mockedDb) => Promise<unknown>) =>
+        callback(mockedDb),
+      );
+      const longDisplayName = "This Is A Very Long Display Name That Should Be Truncated To 36 Characters";
+      mockedDb.project.create.mockResolvedValue({
+        id: "p-long",
+        key: "this-is-a-very-long-display-name",
+        schemaName: "proj_this_is_a_very_long_display_name",
+        displayName: longDisplayName,
+        createdAt: new Date(),
+      });
+      mockedDb.projectMembership.create.mockResolvedValue({ role: "owner", createdAt: new Date() });
+      (provisionProjectSchema as jest.Mock).mockResolvedValue(undefined);
+
+      const result = await coreProjectsService.createForUser("u1", longDisplayName);
+
+      expect(result.displayName).toBe(longDisplayName);
+      expect(result.key.length).toBeLessThanOrEqual(40);
+    });
+  });
+
+  describe("getServiceDetailsForUserProject", () => {
+    it("returns null when user is not a member", async () => {
+      mockedDb.projectMembership.findFirst.mockResolvedValue(null);
+
+      const result = await coreProjectsService.getServiceDetailsForUserProject("u1", "p1", "auth");
+
+      expect(result).toBeNull();
+    });
+
+    it("returns auth service details", async () => {
+      mockedDb.projectMembership.findFirst.mockResolvedValue({
+        userId: "u1",
+        projectId: "p1",
+        project: {
+          id: "p1",
+          key: "payments",
+          schemaName: "proj_payments",
+        },
+      });
+      (getProjectAuthSummary as jest.Mock).mockResolvedValue({
+        lastLogin: new Date(),
+        activeUsers: 5,
+      });
+
+      const result = await coreProjectsService.getServiceDetailsForUserProject("u1", "p1", "auth");
+
+      expect(result).toEqual({
+        service: "auth",
+        auth: expect.objectContaining({
+          activeUsers: 5,
+        }),
+      });
+      expect(getProjectAuthSummary).toHaveBeenCalledWith("proj_payments");
+    });
+
+    it("returns database service details", async () => {
+      mockedDb.projectMembership.findFirst.mockResolvedValue({
+        userId: "u1",
+        projectId: "p1",
+        project: {
+          id: "p1",
+          key: "payments",
+          schemaName: "proj_payments",
+        },
+      });
+      (getProjectDatabaseSummary as jest.Mock).mockResolvedValue({
+        tables: 10,
+        records: 5000,
+      });
+
+      const result = await coreProjectsService.getServiceDetailsForUserProject("u1", "p1", "database");
+
+      expect(result).toEqual({
+        service: "database",
+        database: expect.objectContaining({
+          tables: 10,
+        }),
+      });
+      expect(getProjectDatabaseSummary).toHaveBeenCalledWith("proj_payments");
+    });
+
+    it("returns api service details with active key count", async () => {
+      mockedDb.projectMembership.findFirst.mockResolvedValue({
+        userId: "u1",
+        projectId: "p1",
+        project: {
+          id: "p1",
+          key: "payments",
+          schemaName: "proj_payments",
+        },
+      });
+      mockedDb.apiKey.count.mockResolvedValue(3);
+
+      const result = await coreProjectsService.getServiceDetailsForUserProject("u1", "p1", "api");
+
+      expect(result).toEqual({
+        service: "api",
+        api: {
+          activeApiKeys: 3,
+        },
+      });
+      expect(mockedDb.apiKey.count).toHaveBeenCalledWith({
+        where: {
+          projectId: "p1",
+          revokedAt: null,
+        },
+      });
+    });
+
+    it("returns api service details with zero active keys", async () => {
+      mockedDb.projectMembership.findFirst.mockResolvedValue({
+        userId: "u1",
+        projectId: "p1",
+        project: {
+          id: "p1",
+          key: "new-project",
+          schemaName: "proj_new",
+        },
+      });
+      mockedDb.apiKey.count.mockResolvedValue(0);
+
+      const result = await coreProjectsService.getServiceDetailsForUserProject("u1", "p1", "api");
+
+      expect(result).toEqual({
+        service: "api",
+        api: {
+          activeApiKeys: 0,
+        },
+      });
     });
   });
 });

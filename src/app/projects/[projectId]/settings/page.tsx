@@ -1,13 +1,60 @@
+"use client";
+
 import Link from "next/link";
+import { use, useState } from "react";
 
 import styles from "../../../page.module.css";
 
-export default async function ProjectSettingsPage({
+type SettingsPanelId = "general" | "environment" | "danger";
+
+const ENVIRONMENT_VARIABLES = [
+  {
+    name: "DATABASE_URL",
+    scope: "Production scope",
+    description: "Primary database connection string for this project.",
+    value: "postgresql://...",
+  },
+  {
+    name: "STRIPE_SECRET_KEY",
+    scope: "All environments",
+    description: "Secret key used for payment processing.",
+    value: "sk_live_...",
+  },
+] as const;
+
+const DANGER_ACTIONS = [
+  {
+    id: "pause",
+    title: "Pause Project",
+    description: "Stop all active functions and services.",
+    cta: "Pause",
+  },
+  {
+    id: "delete",
+    title: "Delete Project",
+    description: "Permanently remove this project and its data.",
+    cta: "Delete",
+  },
+] as const;
+
+export default function ProjectSettingsPage({
   params,
 }: {
   params: Promise<{ projectId: string }>;
 }) {
-  const { projectId } = await params;
+  const { projectId } = use(params);
+  const [selectedSettingsPanel, setSelectedSettingsPanel] = useState<SettingsPanelId>("general");
+  const [selectedEnvironmentName, setSelectedEnvironmentName] = useState<(typeof ENVIRONMENT_VARIABLES)[number]["name"]>(
+    ENVIRONMENT_VARIABLES[0].name,
+  );
+  const [selectedDangerAction, setSelectedDangerAction] = useState<(typeof DANGER_ACTIONS)[number]["id"]>(
+    DANGER_ACTIONS[0].id,
+  );
+
+  const selectedEnvironment =
+    ENVIRONMENT_VARIABLES.find((item) => item.name === selectedEnvironmentName) ?? ENVIRONMENT_VARIABLES[0];
+  const selectedDanger = DANGER_ACTIONS.find((item) => item.id === selectedDangerAction) ?? DANGER_ACTIONS[0];
+
 
   return (
     <div className={styles.consoleShell}>
@@ -19,83 +66,176 @@ export default async function ProjectSettingsPage({
             <p className={styles.sidebarMeta}>Project Settings</p>
           </div>
         </div>
+
         <nav className={styles.sidebarNav}>
-          <Link href={`/projects/${projectId}`} className={styles.sidebarNavItem}>Overview</Link>
-          <Link href={`/projects/${projectId}/database`} className={styles.sidebarNavItem}>Database</Link>
-          <Link href={`/projects/${projectId}/auth`} className={styles.sidebarNavItem}>Authentication</Link>
-          <Link href={`/projects/${projectId}/api`} className={styles.sidebarNavItem}>API</Link>
-          <Link href={`/projects/${projectId}/storage`} className={styles.sidebarNavItem}>Storage</Link>
-          <Link href={`/projects/${projectId}/sql`} className={styles.sidebarNavItem}>SQL Editor</Link>
-          <Link href={`/projects/${projectId}/settings`} className={`${styles.sidebarNavItem} ${styles.sidebarNavItemActive}`}>Settings</Link>
+          <Link href={`/projects/${projectId}`} className={styles.sidebarNavItem}>
+            Overview
+          </Link>
+          <Link href={`/projects/${projectId}/database`} className={styles.sidebarNavItem}>
+            Database
+          </Link>
+          <Link href={`/projects/${projectId}/auth`} className={styles.sidebarNavItem}>
+            Authentication
+          </Link>
+          <Link href={`/projects/${projectId}/api`} className={styles.sidebarNavItem}>
+            API
+          </Link>
+          <Link href={`/projects/${projectId}/storage`} className={styles.sidebarNavItem}>
+            Storage
+          </Link>
+          <Link href={`/projects/${projectId}/sql`} className={styles.sidebarNavItem}>
+            SQL Editor
+          </Link>
+          <Link href={`/projects/${projectId}/settings`} className={`${styles.sidebarNavItem} ${styles.sidebarNavItemActive}`}>
+            Settings
+          </Link>
         </nav>
       </aside>
 
       <div className={styles.consoleMain}>
         <header className={styles.consoleTopbar}>
           <p className={styles.topbarPath}>Projects &gt; {projectId} &gt; settings</p>
-          <Link href={`/projects/${projectId}`} className={styles.secondaryButtonLink}>Back to services</Link>
+          <Link href={`/projects/${projectId}`} className={styles.secondaryButtonLink}>
+            Back to services
+          </Link>
         </header>
 
         <main className={styles.consoleContent}>
           <div className={styles.dashHeader}>
             <div>
               <h1 className={styles.dashTitle}>Project Settings</h1>
-              <p className={styles.dashSub}>Manage configuration, environment variables, and destructive actions.</p>
+              <p className={styles.dashSub}>Choose a settings category on the left and inspect its details on the right.</p>
             </div>
           </div>
 
           <section className={styles.serviceConsole}>
-            <div className={styles.serviceSection}>
-              <h3 className={styles.serviceSectionTitle}>General Settings</h3>
-              <div className={styles.serviceMetaGrid}>
-                <div className={styles.serviceMetaCard}>
-                  <p className={styles.serviceMetaLabel}>Project Name</p>
-                  <p className={styles.serviceMetaValue}>Buildstack Production</p>
-                </div>
-                <div className={styles.serviceMetaCard}>
-                  <p className={styles.serviceMetaLabel}>Project ID</p>
-                  <p className={styles.serviceMetaValue}>{projectId}</p>
-                </div>
+            <div className={styles.serviceDetailSplit}>
+              <div className={styles.serviceDetailNav}>
+                <button
+                  type="button"
+                  className={`${styles.serviceDetailNavButton} ${selectedSettingsPanel === "general" ? styles.serviceDetailNavButtonActive : ""}`}
+                  onClick={() => setSelectedSettingsPanel("general")}
+                  aria-pressed={selectedSettingsPanel === "general"}
+                >
+                  General
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.serviceDetailNavButton} ${selectedSettingsPanel === "environment" ? styles.serviceDetailNavButtonActive : ""}`}
+                  onClick={() => setSelectedSettingsPanel("environment")}
+                  aria-pressed={selectedSettingsPanel === "environment"}
+                >
+                  Environment
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.serviceDetailNavButton} ${selectedSettingsPanel === "danger" ? styles.serviceDetailNavButtonActive : ""}`}
+                  onClick={() => setSelectedSettingsPanel("danger")}
+                  aria-pressed={selectedSettingsPanel === "danger"}
+                >
+                  Danger Zone
+                </button>
               </div>
-            </div>
 
-            <div className={styles.serviceSection}>
-              <h3 className={styles.serviceSectionTitle}>Environment Variables</h3>
-              <div className={styles.apiKeyList}>
-                <div className={styles.apiKeyItem}>
-                  <div>
-                    <p className={styles.createFormTitle}>DATABASE_URL</p>
-                    <p className={styles.projectCardDate}>Production scope</p>
+              <div className={styles.serviceDetailPanel}>
+                {selectedSettingsPanel === "general" ? (
+                  <div className={styles.serviceSection}>
+                    <h3 className={styles.serviceSectionTitle}>General Settings</h3>
+                    <div className={styles.serviceMetaGrid}>
+                      <div className={styles.serviceMetaCard}>
+                        <p className={styles.serviceMetaLabel}>Project Name</p>
+                        <p className={styles.serviceMetaValue}>Buildstack Production</p>
+                      </div>
+                      <div className={styles.serviceMetaCard}>
+                        <p className={styles.serviceMetaLabel}>Project ID</p>
+                        <p className={styles.serviceMetaValue}>{projectId}</p>
+                      </div>
+                    </div>
+                    <div className={styles.modalActions}>
+                      <button type="button" className={styles.serviceActionButton}>
+                        Edit
+                      </button>
+                    </div>
                   </div>
-                  <button type="button" className={styles.serviceActionButton}>Edit</button>
-                </div>
-                <div className={styles.apiKeyItem}>
-                  <div>
-                    <p className={styles.createFormTitle}>STRIPE_SECRET_KEY</p>
-                    <p className={styles.projectCardDate}>All environments</p>
-                  </div>
-                  <button type="button" className={styles.serviceActionButton}>Edit</button>
-                </div>
-              </div>
-            </div>
+                ) : null}
 
-            <div className={styles.serviceSection}>
-              <h3 className={styles.serviceSectionTitle}>Danger Zone</h3>
-              <div className={styles.dangerPanel}>
-                <div className={styles.dangerRow}>
-                  <div>
-                    <p className={styles.createFormTitle}>Pause Project</p>
-                    <p className={styles.projectCardDate}>Stop all active functions and services.</p>
+                {selectedSettingsPanel === "environment" ? (
+                  <div className={styles.serviceDetailSplit}>
+                    <div className={styles.serviceDetailNav}>
+                      {ENVIRONMENT_VARIABLES.map((item) => (
+                        <button
+                          key={item.name}
+                          type="button"
+                          className={`${styles.serviceDetailNavButton} ${selectedEnvironmentName === item.name ? styles.serviceDetailNavButtonActive : ""}`}
+                          onClick={() => setSelectedEnvironmentName(item.name)}
+                          aria-pressed={selectedEnvironmentName === item.name}
+                        >
+                          {item.name}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className={styles.serviceDetailPanel}>
+                      <h3 className={styles.serviceSectionTitle}>{selectedEnvironment.name}</h3>
+                      <div className={styles.serviceMetaGrid}>
+                        <div className={styles.serviceMetaCard}>
+                          <p className={styles.serviceMetaLabel}>Scope</p>
+                          <p className={styles.serviceMetaValue}>{selectedEnvironment.scope}</p>
+                        </div>
+                        <div className={styles.serviceMetaCard}>
+                          <p className={styles.serviceMetaLabel}>Current value</p>
+                          <p className={styles.serviceMetaValue}>{selectedEnvironment.value}</p>
+                        </div>
+                        <div className={styles.serviceMetaCard}>
+                          <p className={styles.serviceMetaLabel}>Details</p>
+                          <p className={styles.serviceMetaValue}>{selectedEnvironment.description}</p>
+                        </div>
+                      </div>
+                      <div className={styles.modalActions}>
+                        <button type="button" className={styles.serviceActionButton}>
+                          Edit
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <button type="button" className={styles.dangerButton}>Pause</button>
-                </div>
-                <div className={styles.dangerRow}>
-                  <div>
-                    <p className={styles.createFormTitle}>Delete Project</p>
-                    <p className={styles.projectCardDate}>Permanently remove this project and its data.</p>
+                ) : null}
+
+                {selectedSettingsPanel === "danger" ? (
+                  <div className={styles.serviceDetailSplit}>
+                    <div className={styles.serviceDetailNav}>
+                      {DANGER_ACTIONS.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className={`${styles.serviceDetailNavButton} ${selectedDangerAction === item.id ? styles.serviceDetailNavButtonActive : ""}`}
+                          onClick={() => setSelectedDangerAction(item.id)}
+                          aria-pressed={selectedDangerAction === item.id}
+                        >
+                          {item.title}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className={styles.serviceDetailPanel}>
+                      <h3 className={styles.serviceSectionTitle}>{selectedDanger.title}</h3>
+                      <div className={styles.serviceMetaGrid}>
+                        <div className={styles.serviceMetaCard}>
+                          <p className={styles.serviceMetaLabel}>Effect</p>
+                          <p className={styles.serviceMetaValue}>{selectedDanger.description}</p>
+                        </div>
+                        <div className={styles.serviceMetaCard}>
+                          <p className={styles.serviceMetaLabel}>Action</p>
+                          <p className={styles.serviceMetaValue}>{selectedDanger.cta}</p>
+                        </div>
+                      </div>
+                      <div className={styles.modalActions}>
+                        <button type="button" className={styles.dangerButton}>
+                          {selectedDanger.cta}
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <button type="button" className={styles.dangerButton}>Delete</button>
-                </div>
+                ) : null}
               </div>
             </div>
           </section>

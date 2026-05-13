@@ -4,6 +4,7 @@ import { GET, POST } from "@/app/api/core/projects/route";
 import { requireUser } from "@/core/auth/guard";
 import { HttpError } from "@/lib/http";
 import { coreProjectsService } from "@/modules/core-projects/projects.service";
+import { validateCsrfToken } from "@/lib/http";
 
 jest.mock("@/core/auth/guard", () => ({
   requireUser: jest.fn(),
@@ -26,6 +27,7 @@ jest.mock("@/lib/http", () => {
 
 describe("core projects route", () => {
   const mockedRequireUser = requireUser as jest.MockedFunction<typeof requireUser>;
+  const mockedValidateCsrfToken = validateCsrfToken as jest.MockedFunction<typeof validateCsrfToken>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -96,6 +98,21 @@ describe("core projects route", () => {
 
     const response = await POST(request);
     expect(response.status).toBe(401);
+  });
+
+  it("returns 403 when csrf validation fails on POST", async () => {
+    mockedValidateCsrfToken.mockImplementation(() => {
+      throw new HttpError(403, "CSRF token validation failed", "CSRF_VALIDATION_ERROR");
+    });
+
+    const request = new NextRequest("http://localhost/api/core/projects", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ displayName: "Valid Name" }),
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(403);
   });
 
   it("OPTIONS returns 204", async () => {

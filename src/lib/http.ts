@@ -5,7 +5,6 @@ import { ZodError } from "zod";
 import { logger } from "@/lib/logger";
 import { generateCsrfToken, setCsrfTokenInResponse, verifyCsrfToken } from "@/lib/csrf";
 import { captureException } from "@/lib/sentry";
-import { env } from "@/lib/env";
 
 export class HttpError extends Error {
   status: number;
@@ -17,6 +16,8 @@ export class HttpError extends Error {
     this.code = code;
   }
 }
+
+export type CsrfAuthMode = "session" | "token";
 
 export function jsonResponse<T>(request: NextRequest, data: T, status = 200) {
   // Generate and set CSRF token for all responses
@@ -34,9 +35,12 @@ export function jsonResponse<T>(request: NextRequest, data: T, status = 200) {
  * Validate CSRF token for state-changing requests
  * Throws HttpError if validation fails
  */
-export function validateCsrfToken(request: NextRequest): void {
-  // TODO: re-enable before showcasing — SKIP_AUTH bypasses CSRF checks too
-  if (env.SKIP_AUTH) return;
+export function validateCsrfToken(request: NextRequest, authMode: CsrfAuthMode = "session"): void {
+  // API-key and bearer-token authenticated endpoints are not cookie-session CSRF targets.
+  if (authMode === "token") {
+    return;
+  }
+
   const isValid = verifyCsrfToken(request);
   if (!isValid) {
     throw new HttpError(403, "CSRF token validation failed", "CSRF_VALIDATION_ERROR");

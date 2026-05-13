@@ -42,7 +42,12 @@ export async function POST(
     const { projectId } = await context.params;
     const body = await request.json();
     const input = ApiKeyCreateSchema.parse(body);
-    const apiKey = await projectApiKeysService.createForUserProject(user.sub, projectId, input.name);
+    const apiKey = await projectApiKeysService.createForUserProject(
+      user.sub,
+      projectId,
+      input.name,
+      input.scopes,
+    );
     const response = jsonResponse(request, { data: apiKey }, 201);
     applyCors(request, response);
     return response;

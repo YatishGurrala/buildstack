@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import styles from "../../../page.module.css";
+import { StorageClient } from "./storage-client";
 
 export default async function ProjectStoragePage({
   params,
@@ -40,37 +41,11 @@ export default async function ProjectStoragePage({
           <div className={styles.dashHeader}>
             <div>
               <h1 className={styles.dashTitle}>Storage Explorer</h1>
-              <p className={styles.dashSub}>Browse buckets, inspect files, and manage uploads.</p>
+              <p className={styles.dashSub}>Choose a bucket on the left and inspect the file list and details on the right.</p>
             </div>
           </div>
 
-          <div className={styles.storageLayout}>
-            <section className={styles.serviceConsole}>
-              <h3 className={styles.serviceSectionTitle}>Buckets</h3>
-              <div className={styles.bucketList}>
-                <button type="button" className={styles.bucketItem}>avatars</button>
-                <button type="button" className={`${styles.bucketItem} ${styles.bucketItemActive}`}>product-images</button>
-                <button type="button" className={styles.bucketItem}>logs-archive</button>
-                <button type="button" className={styles.bucketItem}>user-uploads</button>
-              </div>
-            </section>
-
-            <section className={styles.serviceConsole}>
-              <div className={styles.storageHeader}>
-                <h3 className={styles.serviceSectionTitle}>product-images</h3>
-                <div className={styles.storageHeaderActions}>
-                  <button type="button" className={styles.serviceActionButton}>New Folder</button>
-                  <button type="button" className={styles.primaryButton}>Upload File</button>
-                </div>
-              </div>
-              <div className={styles.storageTable}>
-                <div className={styles.storageRowHead}><span>Name</span><span>Type</span><span>Size</span><span>Last Modified</span></div>
-                <div className={styles.storageRow}><span>watch-hero-01.webp</span><span>image/webp</span><span>1.2 MB</span><span>2 minutes ago</span></div>
-                <div className={styles.storageRow}><span>metadata-schema.json</span><span>application/json</span><span>42 KB</span><span>1 hour ago</span></div>
-                <div className={styles.storageRow}><span>launch-campaign.mp4</span><span>video/mp4</span><span>145.2 MB</span><span>Yesterday</span></div>
-              </div>
-            </section>
-          </div>
+          <StorageClient projectId={projectId} />
         </main>
       </div>
     </div>

@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { logger } from './lib/logger';
 import { verifyAccessToken } from './core/auth/tokens';
-import { recordRequestMetric } from './lib/analytics';
+import { ACCESS_COOKIE } from './core/auth/session';
+import { getRouteMetric, recordRequestMetric } from './lib/analytics';
 import { emitErrorRateAlert } from './lib/monitoring';
 
 /**
@@ -11,13 +12,13 @@ import { emitErrorRateAlert } from './lib/monitoring';
  */
 export async function proxy(request: NextRequest) {
   const startTime = Date.now();
-  const requestId = crypto.randomUUID();
+  const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
 
   // Extract user context from auth token (if present)
   let userId: string | undefined;
   try {
     const authHeader = request.headers.get('authorization');
-    const cookie = request.cookies.get('ACCESS_COOKIE')?.value;
+    const cookie = request.cookies.get(ACCESS_COOKIE)?.value;
 
     const token = authHeader?.replace('Bearer ', '') || cookie;
     if (token) {
@@ -29,7 +30,14 @@ export async function proxy(request: NextRequest) {
   }
 
   // Create response (pass-through for actual handler)
-  const response = NextResponse.next();
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-request-id', requestId);
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+  response.headers.set('x-request-id', requestId);
 
   const duration = Date.now() - startTime;
 
@@ -55,11 +63,13 @@ export async function proxy(request: NextRequest) {
     durationMs: duration,
   });
 
+  const routeMetric = getRouteMetric(request.method, request.nextUrl.pathname);
+
   emitErrorRateAlert({
     route: `${request.method} ${request.nextUrl.pathname}`,
-    count: 1,
-    errorCount: response.status >= 400 ? 1 : 0,
-    errorRate: response.status >= 400 ? 100 : 0,
+    count: routeMetric.count,
+    errorCount: routeMetric.errorCount,
+    errorRate: routeMetric.errorRate,
   });
 
   return response;

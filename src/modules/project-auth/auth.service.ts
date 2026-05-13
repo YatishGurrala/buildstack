@@ -39,9 +39,13 @@ async function verifyPassword(password: string, stored: string): Promise<boolean
   return timingSafeEqual(derived, storedBuf);
 }
 
+/** Audience claim applied to all per-project app-user tokens. */
+const APP_TOKEN_AUDIENCE = "project-app";
+
 async function signAppToken(payload: { sub: string; email: string; projectKey: string }) {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+    .setAudience(APP_TOKEN_AUDIENCE)
     .setIssuedAt()
     .setExpirationTime(`${SESSION_TTL_SECONDS}s`)
     .sign(secret);
@@ -101,7 +105,7 @@ export const projectAuthService = {
   async verifyToken(schemaName: string, token: string): Promise<{ user: AppUser; sessionId: string }> {
     let payload: { sub?: string; email?: string; projectKey?: string };
     try {
-      const result = await jwtVerify(token, secret);
+      const result = await jwtVerify(token, secret, { audience: APP_TOKEN_AUDIENCE });
       payload = result.payload as typeof payload;
     } catch {
       throw new HttpError(401, "Invalid or expired token", "INVALID_TOKEN");

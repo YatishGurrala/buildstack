@@ -6,6 +6,8 @@ import { applyCors } from "@/lib/cors";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { handleApiError, jsonResponse, validateCsrfToken } from "@/lib/http";
 import { logger } from "@/lib/logger";
+import { auditLogService } from "@/modules/audit-log/audit-log.service";
+import { usageLogService } from "@/modules/usage-log/usage-log.service";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -30,6 +32,23 @@ export async function POST(request: NextRequest) {
     const { idToken } = LoginSchema.parse(body);
 
     const result = await loginWithGoogle(idToken);
+    await auditLogService.log({
+      action: "LOGIN_SUCCESS",
+      status: "success",
+      actorUserId: result.user.id,
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? undefined,
+      metadata: {
+        provider: "google",
+      },
+    });
+    await usageLogService.record({
+      metric: "auth.login.success",
+      metadata: {
+        provider: "google",
+      },
+    });
+
     const response = jsonResponse(request, {
       user: result.user,
       accessToken: result.accessToken,
@@ -40,6 +59,21 @@ export async function POST(request: NextRequest) {
     applyCors(request, response);
     return response;
   } catch (error) {
+    await auditLogService.log({
+      action: "LOGIN_FAILED",
+      status: "failed",
+      ipAddress: request.headers.get("x-forwarded-for") ?? "local",
+      userAgent: request.headers.get("user-agent") ?? undefined,
+      metadata: {
+        provider: "google",
+      },
+    });
+    await usageLogService.record({
+      metric: "auth.login.failed",
+      metadata: {
+        provider: "google",
+      },
+    });
     logger.warn({ err: error }, "Google login failed");
     const response = handleApiError(request, error);
     applyCors(request, response);

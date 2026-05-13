@@ -42,6 +42,31 @@ export function recordRequestMetric(event: RequestEvent) {
   }
 }
 
+export function getRouteMetric(method: string, path: string) {
+  const key = routeKey(method, path);
+  const metric = routeMetrics.get(key);
+
+  if (!metric) {
+    return {
+      key,
+      count: 0,
+      errorCount: 0,
+      avgDurationMs: 0,
+      errorRate: 0,
+    };
+  }
+
+  return {
+    key,
+    count: metric.count,
+    errorCount: metric.errorCount,
+    avgDurationMs:
+      metric.count > 0 ? Number((metric.totalDurationMs / metric.count).toFixed(2)) : 0,
+    errorRate:
+      metric.count > 0 ? Number(((metric.errorCount / metric.count) * 100).toFixed(2)) : 0,
+  };
+}
+
 export function getAnalyticsSnapshot() {
   const routes = Array.from(routeMetrics.entries()).map(([key, metric]) => ({
     key,

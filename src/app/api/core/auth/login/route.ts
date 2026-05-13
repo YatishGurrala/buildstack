@@ -14,6 +14,8 @@ import { env } from "@/lib/env";
 import { HttpError } from "@/lib/http";
 import { logger } from "@/lib/logger";
 import { randomUUID } from "node:crypto";
+import { auditLogService } from "@/modules/audit-log/audit-log.service";
+import { usageLogService } from "@/modules/usage-log/usage-log.service";
 
 export const runtime = "nodejs";
 
@@ -89,6 +91,23 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    await auditLogService.log({
+      action: "LOGIN_SUCCESS",
+      status: "success",
+      actorUserId: user.id,
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? undefined,
+      metadata: {
+        provider: "admin",
+      },
+    });
+    await usageLogService.record({
+      metric: "auth.login.success",
+      metadata: {
+        provider: "admin",
+      },
+    });
+
     const response = jsonResponse(request, {
       user: { id: user.id, email: user.email, name: user.name },
       accessToken,
@@ -99,6 +118,21 @@ export async function POST(request: NextRequest) {
     applyCors(request, response);
     return response;
   } catch (error) {
+    await auditLogService.log({
+      action: "LOGIN_FAILED",
+      status: "failed",
+      ipAddress: request.headers.get("x-forwarded-for") ?? "local",
+      userAgent: request.headers.get("user-agent") ?? undefined,
+      metadata: {
+        provider: "admin",
+      },
+    });
+    await usageLogService.record({
+      metric: "auth.login.failed",
+      metadata: {
+        provider: "admin",
+      },
+    });
     logger.warn({ err: error }, "Admin login failed");
     const response = handleApiError(request, error);
     applyCors(request, response);

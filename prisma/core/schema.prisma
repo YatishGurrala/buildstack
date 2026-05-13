@@ -11,44 +11,78 @@ enum MembershipRole {
   owner
   admin
   member
+  viewer
+}
+
+enum OrganizationRole {
+  owner
+  admin
+  member
+  viewer
 }
 
 model User {
-  id          String              @id @default(cuid())
-  email       String              @unique
-  name        String?
-  picture     String?
-  googleSub   String              @unique
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
-  memberships ProjectMembership[]
-  sessions    Session[]
+  id                      String                 @id @default(cuid())
+  email                   String                 @unique
+  name                    String?
+  picture                 String?
+  googleSub               String                 @unique
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+  memberships             ProjectMembership[]
+  sessions                Session[]
+  organizationMemberships OrganizationMember[]
+  createdApiKeys          ApiKey[]               @relation("ApiKeyCreator")
+  auditLogs               AuditLog[]
 }
 
 model Project {
-  id          String              @id @default(cuid())
-  key         String              @unique
-  schemaName  String              @unique
-  displayName String
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
-  apiKeys     ApiKey[]
-  memberships ProjectMembership[]
+  id             String              @id @default(cuid())
+  key            String              @unique
+  schemaName     String              @unique
+  displayName    String
+  organizationId String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  apiKeys        ApiKey[]
+  memberships    ProjectMembership[]
+  organization   Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  auditLogs      AuditLog[]
+  usageLogs      UsageLog[]
+
+  @@index([organizationId])
 }
 
 model ApiKey {
-  id         String   @id @default(cuid())
-  projectId  String
-  name       String
-  keyPrefix  String
-  keyHash    String   @unique
-  lastUsedAt DateTime?
-  createdAt  DateTime @default(now())
-  revokedAt  DateTime?
+  id              String        @id @default(cuid())
+  projectId       String
+  createdByUserId String?
+  name            String
+  keyPrefix       String
+  keyHash         String        @unique
+  lastUsedAt      DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  revokedAt       DateTime?
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdByUser User?          @relation("ApiKeyCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  scopes        ApiKeyScope[]
 
   @@index([projectId, createdAt])
+  @@index([createdByUserId])
+}
+
+model ApiKeyScope {
+  id        String   @id @default(cuid())
+  apiKeyId  String
+  scope     String
+  createdAt DateTime @default(now())
+
+  apiKey ApiKey @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+
+  @@unique([apiKeyId, scope])
+  @@index([scope])
 }
 
 model ProjectMembership {
@@ -65,6 +99,35 @@ model ProjectMembership {
   @@index([projectId])
 }
 
+model Organization {
+  id          String               @id @default(cuid())
+  name        String
+  slug        String               @unique
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  projects    Project[]
+  members     OrganizationMember[]
+  auditLogs   AuditLog[]
+
+  @@index([createdAt])
+}
+
+model OrganizationMember {
+  id             String           @id @default(cuid())
+  organizationId String
+  userId         String
+  role           OrganizationRole @default(member)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
 model Session {
   id               String   @id @default(cuid())
   userId           String
@@ -77,4 +140,42 @@ model Session {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model AuditLog {
+  id             String        @id @default(cuid())
+  action         String
+  actorUserId    String?
+  organizationId String?
+  projectId      String?
+  resourceType   String?
+  resourceId     String?
+  status         String
+  ipAddress      String?
+  userAgent      String?
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+
+  actorUser    User?         @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  project      Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([action, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([projectId, createdAt])
+  @@index([organizationId, createdAt])
+}
+
+model UsageLog {
+  id        String   @id @default(cuid())
+  projectId String?
+  metric    String
+  quantity  Int      @default(1)
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([metric, createdAt])
+  @@index([projectId, createdAt])
 }

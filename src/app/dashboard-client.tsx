@@ -14,7 +14,7 @@ type ProjectSummary = {
   key: string;
   schemaName: string;
   displayName: string;
-  role: "owner" | "admin" | "member";
+  role: "owner" | "admin" | "member" | "viewer";
   createdAt: string;
   usage: {
     storageBytes: number;
@@ -61,7 +61,7 @@ export function DashboardClient() {
   const csrfRef = useRef<string>("");
 
   const [isSigningIn, setIsSigningIn] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [, setIsLoggedIn] = useState(false);
   const [sessionChecked, setSessionChecked] = useState(false);
   const [user, setUser] = useState<AppUser | null>(null);
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
@@ -146,7 +146,13 @@ export function DashboardClient() {
   }, [bootstrapCsrf, loadProjects]);
 
   useEffect(() => {
-    void initializeSession();
+    const timer = setTimeout(() => {
+      void initializeSession();
+    }, 0);
+
+    return () => {
+      clearTimeout(timer);
+    };
   }, [initializeSession]);
 
   const handleEmailLogin = useCallback(
