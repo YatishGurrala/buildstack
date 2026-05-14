@@ -6,26 +6,12 @@ import { verifyAccessToken } from "@/core/auth/tokens";
 import { coreDb } from "@/core/db/core";
 import { provisionProjectSchema } from "@/core/db/projects";
 
-jest.mock("@/lib/env", () => {
-  const actual = jest.requireActual("@/lib/env");
-  return {
-    ...actual,
-    env: {
-      ...actual.env,
-      SKIP_AUTH: false,
-    },
-  };
-});
-
 jest.mock("@/core/auth/tokens", () => ({
   verifyAccessToken: jest.fn(),
 }));
 
 jest.mock("@/core/db/core", () => ({
   coreDb: {
-    user: {
-      upsert: jest.fn(),
-    },
     apiKey: {
       findFirst: jest.fn(),
       update: jest.fn(),
@@ -45,9 +31,6 @@ const mockedProvisionProjectSchema = provisionProjectSchema as jest.MockedFuncti
 >;
 
 const mockedCoreDb = coreDb as unknown as {
-  user: {
-    upsert: jest.Mock;
-  };
   apiKey: {
     findFirst: jest.Mock;
     update: jest.Mock;
@@ -126,6 +109,7 @@ describe("requireProjectApiKey", () => {
         key: "payments",
         schemaName: "proj_payments",
       },
+      scopes: [{ scope: "records:read" }],
     });
 
     const request = new NextRequest("http://localhost/api/v1/payments/records", {
@@ -136,7 +120,11 @@ describe("requireProjectApiKey", () => {
 
     const access = await requireProjectApiKey(request, "payments");
 
-    expect(access).toMatchObject({ projectId: "p1", schemaName: "proj_payments" });
+    expect(access).toMatchObject({
+      projectId: "p1",
+      schemaName: "proj_payments",
+      scopes: ["records:read"],
+    });
     expect(mockedCoreDb.apiKey.update).toHaveBeenCalledWith({
       where: { id: "key1" },
       data: { lastUsedAt: expect.any(Date) },

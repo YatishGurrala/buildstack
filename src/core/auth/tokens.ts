@@ -15,9 +15,13 @@ export type RefreshTokenPayload = {
   sid: string;
 };
 
+/** Audience claim applied to all platform (core) tokens. */
+export const PLATFORM_TOKEN_AUDIENCE = "buildstack-core";
+
 export async function signAccessToken(payload: AccessTokenPayload) {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+    .setAudience(PLATFORM_TOKEN_AUDIENCE)
     .setIssuedAt()
     .setExpirationTime(`${env.ACCESS_TOKEN_TTL_MINUTES}m`)
     .sign(secret);
@@ -26,6 +30,7 @@ export async function signAccessToken(payload: AccessTokenPayload) {
 export async function signRefreshToken(payload: RefreshTokenPayload) {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+    .setAudience(PLATFORM_TOKEN_AUDIENCE)
     .setIssuedAt()
     .setExpirationTime(`${env.REFRESH_TOKEN_TTL_DAYS}d`)
     .sign(secret);
@@ -33,7 +38,7 @@ export async function signRefreshToken(payload: RefreshTokenPayload) {
 
 export async function verifyAccessToken(token: string) {
   try {
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, secret, { audience: PLATFORM_TOKEN_AUDIENCE });
     if (!payload.sub || !payload.email) {
       throw new HttpError(401, "Invalid access token", "INVALID_ACCESS_TOKEN");
     }
@@ -49,7 +54,7 @@ export async function verifyAccessToken(token: string) {
 
 export async function verifyRefreshToken(token: string) {
   try {
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, secret, { audience: PLATFORM_TOKEN_AUDIENCE });
     if (!payload.sub || !payload.sid) {
       throw new HttpError(401, "Invalid refresh token", "INVALID_REFRESH_TOKEN");
     }

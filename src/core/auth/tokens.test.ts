@@ -5,6 +5,7 @@ jest.mock("jose", () => ({
   SignJWT: jest.fn().mockImplementation(() => {
     const chain = {
       setProtectedHeader: jest.fn().mockReturnThis(),
+      setAudience: jest.fn().mockReturnThis(),
       setIssuedAt: jest.fn().mockReturnThis(),
       setExpirationTime: jest.fn().mockReturnThis(),
       sign: mockSign,
@@ -36,6 +37,11 @@ describe("tokens", () => {
     const payload = await verifyAccessToken(token);
 
     expect(payload).toEqual({ sub: "u1", email: "u1@example.com" });
+    expect(mockJwtVerify).toHaveBeenCalledWith(
+      token,
+      expect.any(Uint8Array),
+      expect.objectContaining({ audience: "buildstack-core" }),
+    );
   });
 
   it("rejects invalid access tokens", async () => {
@@ -51,6 +57,11 @@ describe("tokens", () => {
     const payload = await verifyRefreshToken(token);
 
     expect(payload).toEqual({ sub: "u2", sid: "sid-1" });
+    expect(mockJwtVerify).toHaveBeenCalledWith(
+      token,
+      expect.any(Uint8Array),
+      expect.objectContaining({ audience: "buildstack-core" }),
+    );
   });
 
   it("rejects wrong token type for refresh verification", async () => {
