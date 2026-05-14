@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NODE_ENV: test
+      SKIP_AUTH: "false"
       CORE_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/core_db
       PROJECTS_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/projects_db
       JWT_SECRET: ci-test-jwt-secret-1234567890
@@ -57,6 +58,7 @@ jobs:
           --health-retries 5
     env:
       NODE_ENV: test
+      SKIP_AUTH: "false"
       CORE_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/core_db
       PROJECTS_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/projects_db
       JWT_SECRET: ci-test-jwt-secret-1234567890
@@ -90,6 +92,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NODE_ENV: production
+      SKIP_AUTH: "false"
       CORE_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/core_db
       PROJECTS_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/projects_db
       JWT_SECRET: ci-build-jwt-secret-1234567890
