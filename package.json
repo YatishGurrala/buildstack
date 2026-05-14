@@ -22,9 +22,9 @@
     "docker:down": "docker compose down",
     "smoke:deploy": "bash scripts/ops/smoke-deploy.sh",
     "test:load:api": "node scripts/testing/load-sanity.mjs",
-    "test": "jest",
+    "test": "npm run prisma:deploy:core && jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "npm run prisma:deploy:core && jest --coverage"
   },
   "dependencies": {
     "@prisma/client": "^6.17.1",

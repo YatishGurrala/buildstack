@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import styles from "../../../page.module.css";
-import { StorageClient } from "./storage-client";
 
 export default async function ProjectStoragePage({
   params,
@@ -41,11 +40,18 @@ export default async function ProjectStoragePage({
           <div className={styles.dashHeader}>
             <div>
               <h1 className={styles.dashTitle}>Storage Explorer</h1>
-              <p className={styles.dashSub}>Choose a bucket on the left and inspect the file list and details on the right.</p>
+              <p className={styles.dashSub}>Storage engines are out of frozen core scope. This page remains as a placeholder only.</p>
             </div>
           </div>
 
-          <StorageClient projectId={projectId} />
+          <section className={styles.serviceConsole}>
+            <div className={styles.serviceSection}>
+              <h3 className={styles.serviceSectionTitle}>Not In Frozen Core</h3>
+              <p className={styles.projectCardDate}>
+                Buildstack Core does not implement storage buckets, uploads, or file serving.
+              </p>
+            </div>
+          </section>
         </main>
       </div>
     </div>

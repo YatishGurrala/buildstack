@@ -47,6 +47,11 @@ PROJECTS_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/projects_db
 # Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 
+# Optional admin email/password login.
+# Required only if you plan to use POST /api/core/auth/login.
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=replace-with-strong-password
+
 # JWT
 JWT_SECRET=replace-with-a-very-long-random-secret-at-least-32-chars
 
@@ -57,6 +62,11 @@ REFRESH_TOKEN_TTL_DAYS=30
 # CORS
 CORS_ORIGINS=http://localhost:3000,http://localhost:3001
 ```
+
+Admin login note:
+
+- `POST /api/core/auth/login` requires both `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
+- If you use Google OAuth or local `SKIP_AUTH=true`, these can remain unset.
 
 ### 3. Start PostgreSQL
 

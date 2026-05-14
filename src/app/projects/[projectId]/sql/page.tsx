@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import styles from "../../../page.module.css";
-import { SqlClient } from "./sql-client";
 
 export default async function ProjectSqlPage({
   params,
@@ -41,11 +40,18 @@ export default async function ProjectSqlPage({
           <div className={styles.dashHeader}>
             <div>
               <h1 className={styles.dashTitle}>SQL Editor</h1>
-              <p className={styles.dashSub}>Choose a query on the left and inspect the editor and result details on the right.</p>
+              <p className={styles.dashSub}>Interactive SQL tooling is out of frozen core scope. This page remains as a placeholder only.</p>
             </div>
           </div>
 
-          <SqlClient projectId={projectId} />
+          <section className={styles.serviceConsole}>
+            <div className={styles.serviceSection}>
+              <h3 className={styles.serviceSectionTitle}>Not In Frozen Core</h3>
+              <p className={styles.projectCardDate}>
+                Buildstack Core does not ship an interactive SQL workbench.
+              </p>
+            </div>
+          </section>
         </main>
       </div>
     </div>
