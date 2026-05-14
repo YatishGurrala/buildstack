@@ -47,6 +47,11 @@ PROJECTS_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/projects_db
 # Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 
+# Optional admin email/password login.
+# Required only if you plan to use POST /api/core/auth/login.
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=replace-with-strong-password
+
 # JWT
 JWT_SECRET=replace-with-a-very-long-random-secret-at-least-32-chars
 
@@ -57,6 +62,11 @@ REFRESH_TOKEN_TTL_DAYS=30
 # CORS
 CORS_ORIGINS=http://localhost:3000,http://localhost:3001
 ```
+
+Admin login note:
+
+- `POST /api/core/auth/login` requires both `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
+- If you use Google OAuth or local `SKIP_AUTH=true`, these can remain unset.
 
 ### 3. Start PostgreSQL
 
@@ -138,6 +148,13 @@ http://localhost:3000/test-client.html
 4. **Copy tokens** — Access tokens visible for manual cURL testing
 
 No additional setup required — the test client connects to your local backend!
+
+## App Screens
+
+- The home page is the global project list.
+- Project pages focus on a single backend workspace and keep the visible details narrow so the important actions stay easy to scan.
+- The API panel is the main place to create keys and get connection snippets.
+- Settings, storage, SQL, and analytics are separate pages so each task stays focused.
 
 ## API Endpoints
 

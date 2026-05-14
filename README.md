@@ -1,5 +1,9 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## What This App Is
+
+Buildstack is a multi-project backend platform. The home dashboard shows the global project list, while each project dashboard focuses on the smallest useful set of controls for that project: service overview, API access, storage, and settings.
+
 ## Getting Started
 
 First, run the development server:
@@ -20,6 +24,20 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Infrastructure Env Notes
+
+- Current database envs are `CORE_DATABASE_URL` and `PROJECTS_DATABASE_URL`.
+- `ADMIN_EMAIL` and `ADMIN_PASSWORD` are optional, but both are required if you use `POST /api/core/auth/login`.
+- If you use Google OAuth or local `SKIP_AUTH=true`, admin email/password can remain unset.
+
+## Project Dashboard
+
+The project dashboard is intentionally compact.
+
+- Open a service card to see only the most important controls for that service.
+- Use the API panel to create and revoke keys.
+- Use the database and auth views to confirm current project state without digging through dense diagnostics.
+- The documentation links in the app are meant to support a quick "what do I need next?" workflow rather than a full admin manual.
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

@@ -132,6 +132,11 @@ PROJECTS_DATABASE_URL=postgresql://postgres:your-secure-password@db:5432/project
 # Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 
+# Optional admin email/password login.
+# Required only if you plan to use POST /api/core/auth/login.
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=replace-with-strong-password
+
 # JWT Secret (generate: openssl rand -base64 32)
 JWT_SECRET=your-secure-jwt-secret-min-32-chars
 
@@ -172,7 +177,9 @@ This repo already includes a production-ready `docker-compose.yml`. Confirm thes
 1. `db` service uses `postgres:16-alpine`
 2. `POSTGRES_PASSWORD` is sourced from env (`${POSTGRES_PASSWORD:-postgres}`)
 3. `api` depends on healthy `db`
-4. `.env` contains `CORE_DATABASE_URL`, `PROJECT1_DATABASE_URL`, `PROJECT2_DATABASE_URL` pointing to host `db`
+4. `.env` contains `CORE_DATABASE_URL` and `PROJECTS_DATABASE_URL` pointing to host `db`
+
+Legacy note: `PROJECT1_DATABASE_URL` fallback exists in code for backward compatibility only; use `PROJECTS_DATABASE_URL` for current deployments.
 
 ## Step 6: Start Containers
 
