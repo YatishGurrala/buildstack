@@ -41,7 +41,17 @@ import {
 } from "@/core/auth/tokens";
 import { loginWithGoogle, revokeSession, rotateSession } from "@/core/auth/auth.service";
 
-const mockedCoreDb = coreDb as jest.Mocked<typeof coreDb>;
+const mockedCoreDb = coreDb as unknown as {
+  user: {
+    upsert: jest.Mock;
+  };
+  session: {
+    create: jest.Mock;
+    findUnique: jest.Mock;
+    update: jest.Mock;
+    updateMany: jest.Mock;
+  };
+};
 const mockedVerifyGoogleIdToken = verifyGoogleIdToken as jest.MockedFunction<
   typeof verifyGoogleIdToken
 >;
