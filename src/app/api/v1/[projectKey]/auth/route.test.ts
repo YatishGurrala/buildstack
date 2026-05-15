@@ -27,6 +27,7 @@ describe("project auth routes", () => {
     projectId: "p1",
     projectKey: "myapp",
     schemaName: "proj_myapp",
+    scopes: [],
   };
 
   const AUTH_RESULT = {

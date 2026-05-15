@@ -7,8 +7,6 @@ import { coreProjectsService } from "@/modules/core-projects/projects.service";
 
 export const runtime = "nodejs";
 
-const ALLOWED_SERVICES = new Set(["auth", "database", "api", "logs", "usage"]);
-
 export async function OPTIONS(request: NextRequest) {
   const response = new NextResponse(null, { status: 204 });
   applyCors(request, response);
@@ -22,23 +20,20 @@ export async function GET(
   try {
     const user = await requireUser(request);
     const { projectId } = await context.params;
-    const service = request.nextUrl.searchParams.get("service") ?? "";
+    const limitParam = request.nextUrl.searchParams.get("limit");
+    const parsedLimit = limitParam ? Number(limitParam) : undefined;
 
-    if (!ALLOWED_SERVICES.has(service)) {
-      throw new HttpError(400, "Invalid service", "INVALID_SERVICE");
+    if (parsedLimit !== undefined && (!Number.isFinite(parsedLimit) || parsedLimit < 1)) {
+      throw new HttpError(400, "Invalid limit", "INVALID_LIMIT");
     }
 
-    const details = await coreProjectsService.getServiceDetailsForUserProject(
-      user.sub,
-      projectId,
-      service as "auth" | "database" | "api" | "logs" | "usage",
-    );
+    const logs = await coreProjectsService.getAuditLogsForUserProject(user.sub, projectId, parsedLimit);
 
-    if (!details) {
+    if (!logs) {
       throw new HttpError(404, "Project not found", "PROJECT_NOT_FOUND");
     }
 
-    const response = jsonResponse(request, { data: details });
+    const response = jsonResponse(request, { data: { items: logs } });
     applyCors(request, response);
     return response;
   } catch (error) {

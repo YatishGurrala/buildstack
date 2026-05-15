@@ -3,7 +3,6 @@ import { NextRequest } from "next/server";
 import { DELETE } from "@/app/api/core/projects/[projectId]/api-keys/[keyId]/route";
 import { requireUser } from "@/core/auth/guard";
 import { HttpError } from "@/lib/http";
-import { projectApiKeysService } from "@/modules/core-projects/api-keys.service";
 
 jest.mock("@/core/auth/guard", () => ({
   requireUser: jest.fn(),
